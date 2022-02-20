@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="AlwaysShowAction">
+
+  <item
+      android:id="@+id/help"
+      android:icon="@drawable/ic_action_help"
+      android:showAsAction="ifRoom"
+      android:title="@string/help" />
+
+  <item
+      android:id="@+id/about"
+      android:icon="@drawable/ic_action_about"
+      android:showAsAction="ifRoom"
+      android:title="@string/about" />
+
+  <item
+      android:id="@+id/theme"
+      android:icon="@drawable/ic_action_theme"
+      android:showAsAction="ifRoom"
+      android:title="@string/theme" />
+
+</menu>
