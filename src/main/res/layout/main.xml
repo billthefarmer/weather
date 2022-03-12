@@ -1,12 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<merge
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:layout_marginLeft="8dp"
-    android:layout_marginRight="8dp"
-    android:orientation="vertical"
-    tools:ignore="HardcodedText">
+    tools:ignore="ContentDescription">
 
-</LinearLayout>
+  <LinearLayout
+      android:layout_width="fill_parent"
+      android:layout_height="fill_parent"
+      android:layout_marginLeft="8dp"
+      android:layout_marginRight="8dp"
+      android:orientation="vertical"
+      tools:ignore="HardcodedText">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+      <ImageView
+          android:id="@+id/found"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:src="@drawable/ic_action_location_searching" />
+
+      <TextView
+          android:id="@+id/location"
+          android:layout_width="wrap_content"
+          android:layout_height="fill_parent"
+          android:layout_marginLeft="8dp"
+          android:text="Location"
+          android:gravity="center"
+          android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+      <ImageView
+          android:id="@+id/image"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:src="@drawable/ic_32" />
+
+    </LinearLayout>
+
+  </LinearLayout>
+
+  <ImageButton
+      android:id="@+id/add"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginRight="28dp"
+      android:layout_marginBottom="28dp"
+      android:layout_gravity="bottom|end"
+      android:elevation="6dp"
+      android:background="@drawable/ic_button_background"
+      android:src="@drawable/ic_action_new"
+      tools:ignore="UnusedAttribute" />
+
+  <ProgressBar
+      android:id="@+id/progress"
+      android:visibility="gone"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_gravity="center"
+      android:elevation="6dp"
+      tools:ignore="UnusedAttribute" />
+
+</merge>

@@ -5,7 +5,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.1.1'
+        classpath 'com.android.tools.build:gradle:7.1.2'
     }
 }
 
@@ -37,7 +37,12 @@ android {
     }
 
     lintOptions {
-        disable 'OldTargetApi', 'NonConstantResourceId', 'ExpiredTargetSdkVersion'
+        disable 'OldTargetApi', 'NonConstantResourceId',
+            'ExpiredTargetSdkVersion'
         // abortOnError false
     }
+}
+
+dependencies {
+    implementation 'org.jsoup:jsoup:1.14.3'
 }
