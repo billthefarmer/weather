@@ -2,32 +2,35 @@
 <merge
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:ignore="ContentDescription">
+    tools:ignore="RtlHardcoded">
 
   <LinearLayout
       android:layout_width="fill_parent"
       android:layout_height="fill_parent"
+      android:layout_marginTop="8dp"
+      android:layout_marginBottom="8dp"
       android:layout_marginLeft="8dp"
       android:layout_marginRight="8dp"
       android:orientation="vertical"
-      tools:ignore="HardcodedText">
+      tools:ignore="ContentDescription">
 
     <LinearLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        tools:ignore="UseCompoundDrawables">
 
       <ImageView
           android:id="@+id/found"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
-          android:src="@drawable/ic_action_location_searching" />
+          android:src="@drawable/ic_action_location_searching"
+          tools:ignore="ContentDescription" />
 
       <TextView
           android:id="@+id/location"
           android:layout_width="wrap_content"
           android:layout_height="fill_parent"
           android:layout_marginLeft="8dp"
-          android:text="Location"
           android:gravity="center"
           android:textAppearance="?android:attr/textAppearanceMedium" />
 
@@ -35,15 +38,246 @@
 
     <LinearLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        tools:ignore="ContentDescription">
 
       <ImageView
-          android:id="@+id/image"
+          android:id="@+id/weather"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
           android:src="@drawable/ic_32" />
 
+      <LinearLayout
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_marginLeft="16dp"
+          android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <TextView
+            android:id="@+id/description"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+          <LinearLayout
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/temperature"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+            <TextView
+                android:id="@+id/precipitation"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+          </LinearLayout>
+
+          <LinearLayout
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:layout_marginLeft="16dp"
+              android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/wind"
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+            <TextView
+                android:id="@+id/humidity"
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+          </LinearLayout>
+
+        </LinearLayout>
+
+      </LinearLayout>
+
     </LinearLayout>
+
+    <ScrollView
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:fillViewport="true">
+
+      <LinearLayout
+          android:id="@+id/days"
+          android:layout_width="fill_parent"
+          android:layout_height="wrap_content"
+          android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
+
+          <ImageView
+              android:id="@+id/w1"
+              android:layout_width="64dp"
+              android:layout_height="64dp"
+              android:src="@drawable/ic_32" />
+
+          <LinearLayout
+              android:id="@+id/d1"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+          </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
+
+          <ImageView
+              android:id="@+id/w2"
+              android:layout_width="64dp"
+              android:layout_height="64dp"
+              android:src="@drawable/ic_32" />
+
+          <LinearLayout
+              android:id="@+id/d2"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+          </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
+
+          <ImageView
+              android:id="@+id/w3"
+              android:layout_width="64dp"
+              android:layout_height="64dp"
+              android:src="@drawable/ic_32" />
+
+          <LinearLayout
+              android:id="@+id/d3"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+          </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
+
+          <ImageView
+              android:id="@+id/w4"
+              android:layout_width="64dp"
+              android:layout_height="64dp"
+              android:src="@drawable/ic_32" />
+
+          <LinearLayout
+              android:id="@+id/d4"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+          </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
+
+          <ImageView
+              android:id="@+id/w5"
+              android:layout_width="64dp"
+              android:layout_height="64dp"
+              android:src="@drawable/ic_32" />
+
+          <LinearLayout
+              android:id="@+id/d5"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+          </LinearLayout>
+
+        </LinearLayout>
+
+      </LinearLayout>
+
+    </ScrollView>
 
   </LinearLayout>
 
@@ -53,7 +287,7 @@
       android:layout_height="wrap_content"
       android:layout_marginRight="28dp"
       android:layout_marginBottom="28dp"
-      android:layout_gravity="bottom|end"
+      android:layout_gravity="bottom|right"
       android:elevation="6dp"
       android:background="@drawable/ic_button_background"
       android:src="@drawable/ic_action_new"

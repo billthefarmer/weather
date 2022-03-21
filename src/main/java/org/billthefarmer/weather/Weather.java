@@ -23,12 +23,15 @@
 
 package org.billthefarmer.weather;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.location.Address;
+import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
@@ -50,6 +53,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.io.BufferedReader;
@@ -97,53 +102,57 @@ public class Weather extends Activity
 
     public static final String YAHOO_URL =
         "https://search.yahoo.com/search?p=weather %s";
-/*
-    public static final String REGION = "region";
-    public static final String CURRENT_CONDITIONS = "currentConditions";
-    public static final String DAY_HOUR = "dayhour";
-    public static final String TEMP = "temp";
-    public static final String C = "c";
-    public static final String F = "f";
-    public static final String PRECIP = "precip";
-    public static final String HUMIDITY = "humidity";
-    public static final String WIND = "wind";
-    public static final String KM = "km";
-    public static final String MILE = "mile";
-    public static final String ICON_URL = "iconURL";
-    public static final String COMMENT = "comment";
-    public static final String NEXT_DAYS = "next_days";
-    public static final String DAY = "day";
-    public static final String MAX_TEMP = "max_temp";
-    public static final String MIN_TEMP = "min_temp";
-    public static final String MAX_C = "max_c";
-    public static final String MAX_F = "max_f";
-    public static final String MIN_C = "min_c";
-    public static final String MIN_F = "min_f";
-*/
-    public static final String WOB_WC = "wob_wc";
-    public static final String WOB_DC = "wob_dc";
-    public static final String WOB_TM = "wob_tm";
-    public static final String WOB_WS = "wob_ws";
-    public static final String WOB_DP = "wob_dp";
-    public static final String WOB_DF = "wob_df";
-    public static final String WOB_PP = "wob_pp";
-    public static final String WOB_HM = "wob_hm";
 
-    public static final String WOB_LOC = "wob_loc";
+    public static final String WOB_DC = "wob_dc";
+    public static final String WOB_DF = "wob_df";
+    public static final String WOB_DP = "wob_dp";
+    public static final String WOB_HM = "wob_hm";
+    public static final String WOB_PP = "wob_pp";
+    public static final String WOB_TM = "wob_tm";
+    public static final String WOB_WC = "wob_wc";
+    public static final String WOB_WS = "wob_ws";
+
     public static final String WOB_DTS = "wob_dts";
+    public static final String WOB_LOC = "wob_loc";
     public static final String WOB_TTM = "wob_ttm";
 
     public static final String Z1VZSB = "Z1VzSb";
     public static final String UW5PK = "uW5pk";
     public static final String WOB_T = "wob_t";
 
+    public static final String DESCRIPTIONS[] =
+    {
+        "Sunny", "Mostly sunny", "Partly cloudy",
+        "Mostly cloudy", "Cloudy", "Scattered showers",
+        "Light rain", "Rain", "Heavy rain", 
+    };
+
+    public static final int IMAGES[] =
+    {
+        R.drawable.ic_sunny, R.drawable.ic_mostly_sunny,
+        R.drawable.ic_partly_cloudy, R.drawable.ic_mostly_cloudy,
+        R.drawable.ic_cloudy, R.drawable.ic_showers,
+        R.drawable.ic_light_rain, R.drawable.ic_rain,
+        R.drawable.ic_heavy_rain,
+    };
+
     public static final int REQUEST_PERMS = 1;
 
     public static final int DARK  = 1;
     public static final int LIGHT = 2;
 
-    private Map<String, String> currentMap;
-    private List<Map<String, String>> forecastList;
+    private ImageView locationImage;
+    private ImageView weatherImage;
+
+    private TextView dateText;
+    private TextView windText;
+    private TextView locationText;
+    private TextView humidityText;
+    private TextView descriptionText;
+    private TextView temperatureText;
+    private TextView precipitationText;
+
+    private ProgressBar progress;
 
     private int theme;
 
@@ -160,8 +169,18 @@ public class Weather extends Activity
 
         setContentView(R.layout.main);
 
-        currentMap = new HashMap<String, String>();
-        forecastList = new ArrayList<Map<String, String>>();
+        locationImage = findViewById(R.id.found);
+        weatherImage = findViewById(R.id.weather);
+
+        dateText = findViewById(R.id.date);
+        windText = findViewById(R.id.wind);
+        locationText = findViewById(R.id.location);
+        humidityText = findViewById(R.id.humidity);
+        descriptionText = findViewById(R.id.description);
+        temperatureText = findViewById(R.id.temperature);
+        precipitationText = findViewById(R.id.precipitation);
+
+        progress = findViewById(R.id.progress);
     }
 
     // onResume
@@ -285,6 +304,7 @@ public class Weather extends Activity
 
             GoogleTask task = new GoogleTask(this);
             task.execute(url);
+            progress.setVisibility(View.VISIBLE);
         }
 
         catch (Exception e)
@@ -296,8 +316,46 @@ public class Weather extends Activity
     // display
     private void display(Document doc)
     {
+        progress.setVisibility(View.GONE);
+
         Element weather = doc.getElementById(WOB_WC);
         String location = weather.getElementById(WOB_LOC).text();
+
+        locationImage.setImageResource(R.drawable.ic_action_location_found);
+        locationText.setText(location);
+
+        String date = weather.getElementById(WOB_DTS).text();
+        dateText.setText(date);
+        String description = weather.getElementById(WOB_DC).text();
+        descriptionText.setText(description);
+        for (int i = 0; i < DESCRIPTIONS.length; i++)
+        {
+            if (DESCRIPTIONS[i].contentEquals(description))
+            {
+                weatherImage.setImageResource(IMAGES[i]);
+                break;
+            }
+        }
+
+        String temperature = weather.getElementById(WOB_TM).text();
+        temperatureText.setText(String.format("%s°C", temperature));
+
+        String wind = weather.getElementById(WOB_WS).text();
+        windText.setText(wind);
+
+        String precipitation = weather.getElementById(WOB_PP).text();
+        precipitationText.setText(precipitation);
+
+        String humidity = weather.getElementById(WOB_HM).text();
+        humidityText.setText(humidity);
+
+        Element daily = doc.getElementById(WOB_DP);
+        Elements days = daily.getElementsByClass(WOB_DF);
+        for (Element day: days)
+        {
+            String d = day.getElementsByClass(Z1VZSB).first().text();
+            String w = day.getElementsByClass(UW5PK).first().attr("alt");
+        }
     }
 
     // theme
@@ -352,6 +410,7 @@ public class Weather extends Activity
             text.setMovementMethod(LinkMovementMethod.getInstance());
         }
     }
+
     // GoogleTask
     private static class GoogleTask
             extends AsyncTask<String, Void, Document>
@@ -398,122 +457,11 @@ public class Weather extends Activity
         protected void onPostExecute(Document doc)
         {
             final Weather weather = weatherWeakReference.get();
-            if (weather == null)
+            if (weather == null || doc == null)
                 return;
 
-            if (doc == null)
-                return;
-
+            
             weather.display(doc);
         }
     }
-/*
-    // LoadTask
-    private static class LoadTask extends AsyncTask<String, Void, String>
-    {
-        private WeakReference<Weather> weatherWeakReference;
-
-        // LoadTask
-        public LoadTask(Weather weather)
-        {
-            weatherWeakReference = new WeakReference<>(weather);
-        }
-
-        // doInBackground
-        @Override
-        protected String doInBackground(String... urls)
-        {
-            final Weather weather = weatherWeakReference.get();
-            if (weather == null)
-                return null;
-
-            StringBuilder content = new StringBuilder();
-            try
-            {
-                URL url = new URL(urls[0]);
-                try (BufferedReader reader = new BufferedReader
-                     (new InputStreamReader(url.openStream())))
-                {
-                    String line;
-                    while ((line = reader.readLine()) != null)
-                    {
-                        content.append(line);
-                        content.append(System.getProperty("line.separator"));
-                    }
-                }
-            }
-
-            catch (Exception e) {}
-
-            return content.toString();
-        }
-
-        // onPostExecute
-        @Override
-        protected void onPostExecute(String result)
-        {
-            final Weather weather = weatherWeakReference.get();
-            if (weather == null)
-                return;
-
-            try
-            {
-                JSONObject json = new JSONObject(result);
-                String region = json.getString(REGION);
-                JSONObject currentJSON = json.getJSONObject(CURRENT_CONDITIONS);
-                String dateTime = currentJSON.getString(DAY_HOUR);
-                JSONObject tempJSON = currentJSON.getJSONObject(TEMP);
-                String cent = tempJSON.getString(C);
-                String fahr = tempJSON.getString(F);
-                String precip = currentJSON.getString(PRECIP);
-                String humidity = currentJSON.getString(HUMIDITY);
-                JSONObject windJSON = currentJSON.getJSONObject(WIND);
-                String km = windJSON.getString(KM);
-                String mile = windJSON.getString(MILE);
-                String icon = currentJSON.getString(ICON_URL);
-                String comment = currentJSON.getString(COMMENT);
-
-                weather.currentMap.put(REGION, region);
-                weather.currentMap.put(DAY_HOUR, dateTime);
-                weather.currentMap.put(C, cent);
-                weather.currentMap.put(F, fahr);
-                weather.currentMap.put(PRECIP, precip);
-                weather.currentMap.put(HUMIDITY, humidity);
-                weather.currentMap.put(KM, km);
-                weather.currentMap.put(MILE, mile);
-                weather.currentMap.put(ICON_URL, icon);
-                weather.currentMap.put(COMMENT, comment);
-
-                JSONArray forecastJSON = json.getJSONArray(NEXT_DAYS);
-                for (int i = 0; i < forecastJSON.length(); i++)
-                {
-                    Map<String, String> dayMap = new HashMap<String, String>();
-                    JSONObject dayJSON = forecastJSON.getJSONObject(i);
-
-                    String day = dayJSON.getString(DAY);
-                    String dayComment = dayJSON.getString(COMMENT);
-                    JSONObject maxJSON = dayJSON.getJSONObject(MAX_TEMP);
-                    String maxC = tempJSON.getString(C);
-                    String maxF = tempJSON.getString(F);
-                    JSONObject minJSON = dayJSON.getJSONObject(MIN_TEMP);
-                    String minC = tempJSON.getString(C);
-                    String minF = tempJSON.getString(F);
-                    String dayIcon = dayJSON.getString(ICON_URL);
-
-                    dayMap.put(DAY, day);
-                    dayMap.put(COMMENT, dayComment);
-                    dayMap.put(MAX_C, maxC);
-                    dayMap.put(MAX_F, maxF);
-                    dayMap.put(MIN_C, minC);
-                    dayMap.put(MIN_F, minF);
-                    dayMap.put(ICON_URL, dayIcon);
-
-                    weather.forecastList.add(dayMap);
-                }
-            }
-
-            catch (Exception e) {}
-        }
-    }
-*/
 }
