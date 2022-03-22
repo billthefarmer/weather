@@ -124,7 +124,8 @@ public class Weather extends Activity
     {
         "Sunny", "Mostly sunny", "Partly cloudy",
         "Mostly cloudy", "Cloudy", "Scattered showers",
-        "Light rain", "Rain", "Heavy rain", 
+        "Light rain", "Rain", "Heavy rain", "Clear",
+        "Clear with periodic clouds"
     };
 
     public static final int IMAGES[] =
@@ -133,7 +134,8 @@ public class Weather extends Activity
         R.drawable.ic_partly_cloudy, R.drawable.ic_mostly_cloudy,
         R.drawable.ic_cloudy, R.drawable.ic_showers,
         R.drawable.ic_light_rain, R.drawable.ic_rain,
-        R.drawable.ic_heavy_rain,
+        R.drawable.ic_heavy_rain, R.drawable.ic_clear,
+        R.drawable.ic_clear_with_periodic_clouds
     };
 
     public static final int REQUEST_PERMS = 1;
