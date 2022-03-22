@@ -152,6 +152,8 @@ public class Weather extends Activity
     private TextView temperatureText;
     private TextView precipitationText;
 
+    private ViewGroup dayGroup;
+
     private ProgressBar progress;
 
     private int theme;
@@ -179,6 +181,8 @@ public class Weather extends Activity
         descriptionText = findViewById(R.id.description);
         temperatureText = findViewById(R.id.temperature);
         precipitationText = findViewById(R.id.precipitation);
+
+        dayGroup = findViewById(R.id.days);
 
         progress = findViewById(R.id.progress);
     }
@@ -338,23 +342,54 @@ public class Weather extends Activity
         }
 
         String temperature = weather.getElementById(WOB_TM).text();
-        temperatureText.setText(String.format("%s°C", temperature));
+        String format = getString(R.string.centigrade);
+        temperatureText.setText(String.format(format, temperature));
 
         String wind = weather.getElementById(WOB_WS).text();
         windText.setText(wind);
 
         String precipitation = weather.getElementById(WOB_PP).text();
-        precipitationText.setText(precipitation);
+        format = getString(R.string.precipitation);
+        precipitationText.setText(String.format(format, precipitation));
 
         String humidity = weather.getElementById(WOB_HM).text();
-        humidityText.setText(humidity);
+        format = getString(R.string.humidity);
+        humidityText.setText(String.format(format, humidity));
 
         Element daily = doc.getElementById(WOB_DP);
         Elements days = daily.getElementsByClass(WOB_DF);
+
+        int index = 0;
         for (Element day: days)
         {
             String d = day.getElementsByClass(Z1VZSB).first().text();
             String w = day.getElementsByClass(UW5PK).first().attr("alt");
+            ViewGroup group = (ViewGroup) dayGroup.getChildAt(index++);
+            ImageView image = (ImageView) group.getChildAt(0);
+            for (int i = 0; i < DESCRIPTIONS.length; i++)
+            {
+                if (DESCRIPTIONS[i].contentEquals(w))
+                {
+                    image.setImageResource(IMAGES[i]);
+                    break;
+                }
+            }
+            ViewGroup g = (ViewGroup) group.getChildAt(1);
+            ViewGroup gw = (ViewGroup) g.getChildAt(0);
+            ViewGroup gt = (ViewGroup) g.getChildAt(1);
+            
+            TextView text = (TextView) gw.getChildAt(0);
+            text.setText(d);
+            text = (TextView) gw.getChildAt(1);
+            text.setText(w);
+            Elements tt = day.getElementsByClass(WOB_T);
+            format = getString(R.string.centigrade);
+            text = (TextView) gt.getChildAt(0);
+            String td = tt.get(0).text();
+            text.setText(String.format(format, td));
+            text = (TextView) gt.getChildAt(1);
+            String tn = tt.get(2).text();
+            text.setText(String.format(format, tn));
         }
     }
 

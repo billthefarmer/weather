@@ -12,6 +12,10 @@
   <string name="no_data">No data</string>
   <string name="updated">Updated %s</string>
 
+  <string name="centigrade">%s°C</string>
+  <string name="precipitation">Precipitation: %s</string>
+  <string name="humidity">Humidity: %s</string>
+
   <string name="version" formatted="false"><a
   href="https://github.com/billthefarmer/solver/releases/latest">%s</a>\n\nBuilt
   %s\n\nCopyright \u00A9 2022 <a
