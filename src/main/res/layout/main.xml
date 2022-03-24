@@ -13,28 +13,6 @@
       android:layout_marginRight="8dp"
       android:orientation="vertical">
 
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        tools:ignore="UseCompoundDrawables">
-
-      <ImageView
-          android:id="@+id/found"
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:src="@drawable/ic_action_location_searching"
-          tools:ignore="ContentDescription" />
-
-      <TextView
-          android:id="@+id/location"
-          android:layout_width="wrap_content"
-          android:layout_height="fill_parent"
-          android:layout_marginLeft="8dp"
-          android:gravity="center"
-          android:textAppearance="?android:attr/textAppearanceLarge" />
-
-    </LinearLayout>
-
     <include
         layout="@layout/today" />
 

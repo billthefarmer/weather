@@ -122,9 +122,9 @@ public class Weather extends Activity
 
     public static final String DESCRIPTIONS[] =
     {
-        "Sunny", "Mostly sunny", "Partly cloudy",
-        "Mostly cloudy", "Cloudy", "Scattered showers",
-        "Light rain", "Rain", "Heavy rain", "Clear",
+        "Sunny", "Mostly sunny", "Partly cloudy", "Mostly cloudy",
+        "Cloudy", "Scattered showers", "Showers", "Light rain",
+        "Rain", "Heavy rain", "Snow showers", "Snow", "Clear",
         "Clear with periodic clouds"
     };
 
@@ -133,9 +133,10 @@ public class Weather extends Activity
         R.drawable.ic_sunny, R.drawable.ic_mostly_sunny,
         R.drawable.ic_partly_cloudy, R.drawable.ic_mostly_cloudy,
         R.drawable.ic_cloudy, R.drawable.ic_showers,
-        R.drawable.ic_light_rain, R.drawable.ic_rain,
-        R.drawable.ic_heavy_rain, R.drawable.ic_clear,
-        R.drawable.ic_clear_with_periodic_clouds
+        R.drawable.ic_showers, R.drawable.ic_light_rain,
+        R.drawable.ic_rain, R.drawable.ic_heavy_rain,
+        R.drawable.ic_snow_showers, R.drawable.ic_snow,
+        R.drawable.ic_clear, R.drawable.ic_clear_with_periodic_clouds
     };
 
     public static final int REQUEST_PERMS = 1;
@@ -143,12 +144,12 @@ public class Weather extends Activity
     public static final int DARK  = 1;
     public static final int LIGHT = 2;
 
-    private ImageView locationImage;
+    // private ImageView locationImage;
     private ImageView weatherImage;
 
     private TextView dateText;
     private TextView windText;
-    private TextView locationText;
+    // private TextView locationText;
     private TextView humidityText;
     private TextView descriptionText;
     private TextView temperatureText;
@@ -173,12 +174,10 @@ public class Weather extends Activity
 
         setContentView(R.layout.main);
 
-        locationImage = findViewById(R.id.found);
         weatherImage = findViewById(R.id.weather);
 
         dateText = findViewById(R.id.date);
         windText = findViewById(R.id.wind);
-        locationText = findViewById(R.id.location);
         humidityText = findViewById(R.id.humidity);
         descriptionText = findViewById(R.id.description);
         temperatureText = findViewById(R.id.temperature);
@@ -194,6 +193,7 @@ public class Weather extends Activity
     protected void onResume()
     {
         super.onResume();
+        getActionBar().setIcon(R.drawable.ic_action_location_searching);
         refresh();
     }
 
@@ -297,13 +297,17 @@ public class Weather extends Activity
             if (addressList == null)
                 return;
 
-            String locality = "";
+            String locality = null;
             for (Address address: addressList.toArray(new Address[0]))
             {
-                locality = address.getAddressLine(0);
-                if (address.getLocality() != null &&
-                    locality.startsWith(address.getLocality()))
-                   break;
+                if (address.getLocality() != null)
+                {
+                    locality = String.format("%s, %s, %s",
+                                             address.getLocality(),
+                                             address.getSubAdminArea(),
+                                             address.getCountryName());
+                    break;
+                }
             }
 
             String url = String.format(GOOGLE_URL, locality);
@@ -327,8 +331,8 @@ public class Weather extends Activity
         Element weather = doc.getElementById(WOB_WC);
         String location = weather.getElementById(WOB_LOC).text();
 
-        locationImage.setImageResource(R.drawable.ic_action_location_found);
-        locationText.setText(location);
+        getActionBar().setIcon(R.drawable.ic_action_location_found);
+        setTitle(location);
 
         String date = weather.getElementById(WOB_DTS).text();
         dateText.setText(date);
