@@ -51,8 +51,6 @@ public class Help extends Activity
         SharedPreferences preferences =
             PreferenceManager.getDefaultSharedPreferences(this);
 
-        int theme = preferences.getInt(Weather.PREF_THEME, Weather.DARK);
-
         setContentView(R.layout.help);
 
         TextView view = findViewById(R.id.help);

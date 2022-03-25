@@ -45,6 +45,7 @@ import android.text.SpannableStringBuilder;
 import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -56,6 +57,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -90,18 +92,13 @@ public class Weather extends Activity
 {
     public static final String TAG = "Weather";
 
-    public static final String PREF_THEME = "pref_theme";
-    public static final String PREF_DARK = "pref_dark";
-    public static final String PREF_LIGHT = "pref_light";
-
-    public static final String WEATHER_URL =
-        "https://weatherdbi.herokuapp.com/data/weather/%s";
-
     public static final String GOOGLE_URL =
         "https://www.google.com/search?hl=en&q=weather %s";
 
     public static final String YAHOO_URL =
         "https://search.yahoo.com/search?p=weather %s";
+
+    public static final String ADDR_FORMAT = "%s, %s, %s";
 
     public static final String WOB_DC = "wob_dc";
     public static final String WOB_DF = "wob_df";
@@ -140,16 +137,18 @@ public class Weather extends Activity
     };
 
     public static final int REQUEST_PERMS = 1;
+    public static final int LONG_DELAY = 300000;
+    public static final int ADDRESSES = 10;
 
     public static final int DARK  = 1;
     public static final int LIGHT = 2;
 
-    // private ImageView locationImage;
     private ImageView weatherImage;
+
+    private Toast toast;
 
     private TextView dateText;
     private TextView windText;
-    // private TextView locationText;
     private TextView humidityText;
     private TextView descriptionText;
     private TextView temperatureText;
@@ -159,7 +158,7 @@ public class Weather extends Activity
 
     private ProgressBar progress;
 
-    private int theme;
+    private LocationListener listener;
 
     // Called when the activity is first created.
     @Override
@@ -169,8 +168,6 @@ public class Weather extends Activity
 
         SharedPreferences preferences =
             PreferenceManager.getDefaultSharedPreferences(this);
-
-        theme = preferences.getInt(PREF_THEME, DARK);
 
         setContentView(R.layout.main);
 
@@ -186,6 +183,68 @@ public class Weather extends Activity
         dayGroup = findViewById(R.id.days);
 
         progress = findViewById(R.id.progress);
+
+        Weather weather = this;
+        listener = new LocationListener()
+        {
+            @Override
+            public void onLocationChanged(Location location)
+            {
+                double lat = location.getLatitude();
+                double lng = location.getLongitude();
+
+                if (!Geocoder.isPresent())
+                {
+                    progress.setVisibility(View.GONE);
+                    return;
+                }
+
+                Geocoder geocoder = new Geocoder(weather);
+
+                try
+                {
+                    List<Address> addressList =
+                        geocoder.getFromLocation(lat, lng, ADDRESSES);
+
+                    if (addressList == null)
+                        return;
+
+                    String locality = null;
+                    for (Address address: addressList.toArray(new Address[0]))
+                    {
+                        if (address.getLocality() != null)
+                        {
+                            locality = String.format(ADDR_FORMAT,
+                                                     address.getLocality(),
+                                                     address.getSubAdminArea(),
+                                                     address.getCountryName());
+                            break;
+                        }
+                    }
+
+                    String url = String.format(GOOGLE_URL, locality);
+
+                    GoogleTask task = new GoogleTask(weather);
+                    task.execute(url);
+                    progress.setVisibility(View.VISIBLE);
+                }
+
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status,
+                                        Bundle extras) {}
+            @Override
+            public void onProviderEnabled(String provider) {}
+
+            @Override
+            public void onProviderDisabled(String provider) {}
+
+        };
     }
 
     // onResume
@@ -207,8 +266,12 @@ public class Weather extends Activity
             PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = preferences.edit();
 
-        editor.putInt(PREF_THEME, theme);
         editor.apply();
+
+        LocationManager locationManager = (LocationManager)
+            getSystemService(LOCATION_SERVICE);
+
+        locationManager.removeUpdates(listener);
     }
 
     // On create options menu
@@ -278,21 +341,32 @@ public class Weather extends Activity
 
         String provider = locationManager.getBestProvider(new Criteria(), true);
         Location location = locationManager.getLastKnownLocation(provider);
+        locationManager.requestSingleUpdate(provider, listener, null);
+        locationManager.requestLocationUpdates(provider, LONG_DELAY,
+                                               0, listener);
 
         if (location == null)
+        {
+            progress.setVisibility(View.VISIBLE);
             return;
+        }
 
 	double lat = location.getLatitude();
 	double lng = location.getLongitude();
 
         if (!Geocoder.isPresent())
+        {
+            progress.setVisibility(View.GONE);
+            showToast(R.string.noGeo);
             return;
+        }
 
         Geocoder geocoder = new Geocoder(this);
 
         try
         {
-            List<Address> addressList = geocoder.getFromLocation(lat, lng, 10);
+            List<Address> addressList =
+                geocoder.getFromLocation(lat, lng, ADDRESSES);
 
             if (addressList == null)
                 return;
@@ -310,11 +384,11 @@ public class Weather extends Activity
                 }
             }
 
-            String url = String.format(GOOGLE_URL, locality);
+            progress.setVisibility(View.VISIBLE);
 
+            String url = String.format(GOOGLE_URL, locality);
             GoogleTask task = new GoogleTask(this);
             task.execute(url);
-            progress.setVisibility(View.VISIBLE);
         }
 
         catch (Exception e)
@@ -399,14 +473,6 @@ public class Weather extends Activity
         }
     }
 
-    // theme
-    private void theme(int t)
-    {
-        theme = t;
-        if (Build.VERSION.SDK_INT != Build.VERSION_CODES.M)
-            recreate();
-    }
-
     // help
     private void help()
     {
@@ -450,6 +516,21 @@ public class Weather extends Activity
                                    android.R.style.TextAppearance_Small);
             text.setMovementMethod(LinkMovementMethod.getInstance());
         }
+    }
+
+    // showToast
+    void showToast(int key)
+    {
+        String text = getString(key);
+
+        // Cancel the last one
+        if (toast != null)
+            toast.cancel();
+
+        // Make a new one
+        toast = Toast.makeText(this, text, Toast.LENGTH_SHORT);
+        toast.setGravity(Gravity.CENTER, 0, 0);
+        toast.show();
     }
 
     // GoogleTask

@@ -3,16 +3,18 @@
 
   <string name="appName">Weather</string>
 
-  <string name="theme">Theme</string>
-  <string name="dark">Dark theme</string>
   <string name="help">Help</string>
   <string name="about">About</string>
 
-  <string name="no_connection">No connection</string>
-  <string name="no_data">No data</string>
-  <string name="updated">Updated %s</string>
+  <string name="temp">Temperature</string>
+  <string name="cent">°Centigrade</string>
+  <string name="fahr">°Fahrenheit</string>
+
+  <string name="noGeo">No Geocoder</string>
+  <string name="noData">No weather data</string>
 
   <string name="centigrade">%s°C</string>
+  <string name="fahrenheit">%s°F</string>
   <string name="precipitation">Precipitation: %s</string>
   <string name="humidity">Humidity: %s</string>
 
