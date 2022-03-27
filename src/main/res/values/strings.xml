@@ -11,6 +11,7 @@
   <string name="fahr">°Fahrenheit</string>
 
   <string name="noGeo">No Geocoder</string>
+  <string name="noAddr">No address</string>
   <string name="noData">No weather data</string>
 
   <string name="centigrade">%s°C</string>

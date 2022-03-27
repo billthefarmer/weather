@@ -196,6 +196,7 @@ public class Weather extends Activity
                 if (!Geocoder.isPresent())
                 {
                     progress.setVisibility(View.GONE);
+                    showToast(R.string.noGeo);
                     return;
                 }
 
@@ -207,7 +208,10 @@ public class Weather extends Activity
                         geocoder.getFromLocation(lat, lng, ADDRESSES);
 
                     if (addressList == null)
+                    {
+                        showToast(R.string.noAddr);
                         return;
+                    }
 
                     String locality = null;
                     for (Address address: addressList.toArray(new Address[0]))
@@ -222,11 +226,11 @@ public class Weather extends Activity
                         }
                     }
 
-                    String url = String.format(GOOGLE_URL, locality);
+                    progress.setVisibility(View.VISIBLE);
 
+                    String url = String.format(GOOGLE_URL, locality);
                     GoogleTask task = new GoogleTask(weather);
                     task.execute(url);
-                    progress.setVisibility(View.VISIBLE);
                 }
 
                 catch (Exception e)
@@ -341,12 +345,12 @@ public class Weather extends Activity
 
         String provider = locationManager.getBestProvider(new Criteria(), true);
         Location location = locationManager.getLastKnownLocation(provider);
-        locationManager.requestSingleUpdate(provider, listener, null);
         locationManager.requestLocationUpdates(provider, LONG_DELAY,
                                                0, listener);
 
         if (location == null)
         {
+            locationManager.requestSingleUpdate(provider, listener, null);
             progress.setVisibility(View.VISIBLE);
             return;
         }
@@ -369,14 +373,17 @@ public class Weather extends Activity
                 geocoder.getFromLocation(lat, lng, ADDRESSES);
 
             if (addressList == null)
+            {
+                showToast(R.string.noAddr);
                 return;
+            }
 
             String locality = null;
             for (Address address: addressList.toArray(new Address[0]))
             {
                 if (address.getLocality() != null)
                 {
-                    locality = String.format("%s, %s, %s",
+                    locality = String.format(ADDR_FORMAT,
                                              address.getLocality(),
                                              address.getSubAdminArea(),
                                              address.getCountryName());
