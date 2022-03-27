@@ -72,10 +72,8 @@ import java.text.SimpleDateFormat;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -99,6 +97,19 @@ public class Weather extends Activity
         "https://search.yahoo.com/search?p=weather %s";
 
     public static final String ADDR_FORMAT = "%s, %s, %s";
+
+    public static final String DATE = "date";
+    public static final String DESC = "desc";
+    public static final String LOCN = "locn";
+    public static final String TEMP = "temp";
+    public static final String WIND = "wind";
+    public static final String HUMID = "humid";
+    public static final String PRECIP = "precip";
+
+    public static final String DAYS = "days";
+    public static final String DESCS = "descs";
+    public static final String DTEMPS = "dtemps";
+    public static final String NTEMPS = "ntemps";
 
     public static final String WOB_DC = "wob_dc";
     public static final String WOB_DF = "wob_df";
@@ -140,12 +151,9 @@ public class Weather extends Activity
     public static final int LONG_DELAY = 300000;
     public static final int ADDRESSES = 10;
 
-    public static final int DARK  = 1;
-    public static final int LIGHT = 2;
+    private Toast toast;
 
     private ImageView weatherImage;
-
-    private Toast toast;
 
     private TextView dateText;
     private TextView windText;
@@ -251,6 +259,68 @@ public class Weather extends Activity
         };
     }
 
+    // onRestoreInstanceState
+    @Override
+    public void onRestoreInstanceState(Bundle savedInstanceState)
+    {
+        super.onRestoreInstanceState(savedInstanceState);
+
+        setTitle(savedInstanceState.getCharSequence(LOCN));
+
+        dateText.setText(savedInstanceState.getCharSequence(DATE));
+        windText.setText(savedInstanceState.getCharSequence(WIND));
+        humidityText.setText(savedInstanceState.getCharSequence(HUMID));
+        descriptionText.setText(savedInstanceState
+                                .getCharSequence(DESC));
+        temperatureText.setText(savedInstanceState
+                                .getCharSequence(TEMP));
+        precipitationText.setText(savedInstanceState
+                                  .getCharSequence(PRECIP));
+
+        for (int i = 0; i < DESCRIPTIONS.length; i++)
+        {
+            if (DESCRIPTIONS[i].contentEquals(descriptionText.getText()))
+            {
+                weatherImage.setImageResource(IMAGES[i]);
+                break;
+            }
+        }
+
+        ArrayList<String> days = savedInstanceState.getStringArrayList(DAYS);
+        ArrayList<String> descs = savedInstanceState.getStringArrayList(DESCS);
+        ArrayList<String> dtemps =
+            savedInstanceState.getStringArrayList(DTEMPS);
+        ArrayList<String> ntemps =
+            savedInstanceState.getStringArrayList(NTEMPS);
+
+        for (int i = 0; i < dayGroup.getChildCount(); i++)
+        {
+            ViewGroup group = (ViewGroup) dayGroup.getChildAt(i);
+            ViewGroup g = (ViewGroup) group.getChildAt(1);
+            ViewGroup gw = (ViewGroup) g.getChildAt(0);
+            ViewGroup gt = (ViewGroup) g.getChildAt(1);
+
+            TextView text = (TextView) gw.getChildAt(0);
+            text.setText(days.get(i));
+            text = (TextView) gw.getChildAt(1);
+            text.setText(descs.get(i));
+            text = (TextView) gt.getChildAt(0);
+            text.setText(dtemps.get(i));
+            text = (TextView) gt.getChildAt(1);
+            text.setText(ntemps.get(i));
+
+            ImageView image = (ImageView) group.getChildAt(0);
+            for (int j = 0; i < DESCRIPTIONS.length; j++)
+            {
+                if (DESCRIPTIONS[j].contentEquals(descs.get(i)))
+                {
+                    image.setImageResource(IMAGES[j]);
+                    break;
+                }
+            }
+        }
+    }
+
     // onResume
     @Override
     protected void onResume()
@@ -258,6 +328,49 @@ public class Weather extends Activity
         super.onResume();
         getActionBar().setIcon(R.drawable.ic_action_location_searching);
         refresh();
+    }
+
+    // onSaveInstanceState
+    @Override
+    public void onSaveInstanceState(Bundle outState)
+    {
+        super.onSaveInstanceState(outState);
+
+        outState.putCharSequence(LOCN, getTitle());
+
+        outState.putCharSequence(DATE, dateText.getText());
+        outState.putCharSequence(DESC, descriptionText.getText());
+        outState.putCharSequence(TEMP, temperatureText.getText());
+        outState.putCharSequence(WIND, windText.getText());
+        outState.putCharSequence(HUMID, humidityText.getText());
+        outState.putCharSequence(PRECIP, precipitationText.getText());
+
+        ArrayList<String> days = new ArrayList<String>();
+        ArrayList<String> descs = new ArrayList<String>();
+        ArrayList<String> dtemps = new ArrayList<String>();
+        ArrayList<String> ntemps = new ArrayList<String>();
+
+        for (int i = 0; i < dayGroup.getChildCount(); i++)
+        {
+            ViewGroup group = (ViewGroup) dayGroup.getChildAt(i);
+            ViewGroup g = (ViewGroup) group.getChildAt(1);
+            ViewGroup gw = (ViewGroup) g.getChildAt(0);
+            ViewGroup gt = (ViewGroup) g.getChildAt(1);
+
+            TextView text = (TextView) gw.getChildAt(0);
+            days.add(text.getText().toString());
+            text = (TextView) gw.getChildAt(1);
+            descs.add(text.getText().toString());
+            text = (TextView) gt.getChildAt(0);
+            dtemps.add(text.getText().toString());
+            text = (TextView) gt.getChildAt(1);
+            ntemps.add(text.getText().toString());
+        }
+
+        outState.putStringArrayList(DAYS, days);
+        outState.putStringArrayList(DESCS, descs);
+        outState.putStringArrayList(DTEMPS, dtemps);
+        outState.putStringArrayList(NTEMPS, ntemps);
     }
 
     // onPause
@@ -405,7 +518,7 @@ public class Weather extends Activity
     }
 
     // display
-    private void display(Document doc)
+    private void display(Element doc)
     {
         progress.setVisibility(View.GONE);
 
@@ -421,7 +534,7 @@ public class Weather extends Activity
         descriptionText.setText(description);
         for (int i = 0; i < DESCRIPTIONS.length; i++)
         {
-            if (DESCRIPTIONS[i].contentEquals(description))
+            if (DESCRIPTIONS[i].equals(description))
             {
                 weatherImage.setImageResource(IMAGES[i]);
                 break;
@@ -443,7 +556,7 @@ public class Weather extends Activity
         format = getString(R.string.humidity);
         humidityText.setText(String.format(format, humidity));
 
-        Element daily = doc.getElementById(WOB_DP);
+        Element daily = weather.getElementById(WOB_DP);
         Elements days = daily.getElementsByClass(WOB_DF);
 
         int index = 0;
