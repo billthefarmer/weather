@@ -144,7 +144,7 @@ public class Weather extends Activity
         R.drawable.ic_showers, R.drawable.ic_light_rain,
         R.drawable.ic_rain, R.drawable.ic_heavy_rain,
         R.drawable.ic_snow_showers, R.drawable.ic_snow,
-        R.drawable.ic_clear, R.drawable.ic_clear_with_periodic_clouds
+        R.drawable.ic_clear, R.drawable.ic_clear_clouds
     };
 
     public static final int REQUEST_PERMS = 1;
@@ -522,9 +522,20 @@ public class Weather extends Activity
     {
         progress.setVisibility(View.GONE);
 
-        Element weather = doc.getElementById(WOB_WC);
-        String location = weather.getElementById(WOB_LOC).text();
+        if (doc == null)
+        {
+            showToast(R.string.noData);
+            return;
+        }
 
+        Element weather = doc.getElementById(WOB_WC);
+        if (weather == null)
+        {
+            showToast(R.string.noData);
+            return;
+        }
+
+        String location = weather.getElementById(WOB_LOC).text();
         getActionBar().setIcon(R.drawable.ic_action_location_found);
         setTitle(location);
 
@@ -699,10 +710,9 @@ public class Weather extends Activity
         protected void onPostExecute(Document doc)
         {
             final Weather weather = weatherWeakReference.get();
-            if (weather == null || doc == null)
+            if (weather == null)
                 return;
 
-            
             weather.display(doc);
         }
     }
