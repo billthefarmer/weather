@@ -131,9 +131,9 @@ public class Weather extends Activity
     public static final String DESCRIPTIONS[] =
     {
         "Sunny", "Mostly sunny", "Partly cloudy", "Mostly cloudy",
-        "Cloudy", "Mist", "Fog", "Scattered showers", "Showers",
-        "Light rain", "Rain", "Heavy rain", "Snow showers", "Snow",
-        "Clear", "Clear with periodic clouds"
+        "Cloudy", "Haze", "Mist", "Fog", "Scattered showers",
+        "Showers", "Light rain", "Rain", "Heavy rain", "Snow showers",
+        "Snow", "Clear", "Clear with periodic clouds"
     };
 
     public static final int IMAGES[] =
@@ -141,11 +141,11 @@ public class Weather extends Activity
         R.drawable.ic_sunny, R.drawable.ic_mostly_sunny,
         R.drawable.ic_partly_cloudy, R.drawable.ic_mostly_cloudy,
         R.drawable.ic_cloudy, R.drawable.ic_mist, R.drawable.ic_fog,
-        R.drawable.ic_showers, R.drawable.ic_showers,
-        R.drawable.ic_light_rain, R.drawable.ic_rain,
-        R.drawable.ic_heavy_rain, R.drawable.ic_snow_showers,
-        R.drawable.ic_snow, R.drawable.ic_clear,
-        R.drawable.ic_clear_clouds
+        R.drawable.ic_fog, R.drawable.ic_showers,
+        R.drawable.ic_showers, R.drawable.ic_light_rain,
+        R.drawable.ic_rain, R.drawable.ic_heavy_rain,
+        R.drawable.ic_snow_showers, R.drawable.ic_snow,
+        R.drawable.ic_clear, R.drawable.ic_clear_clouds
     };
 
     public static final int REQUEST_PERMS = 1;
