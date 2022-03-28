@@ -141,7 +141,7 @@ public class Weather extends Activity
     {
         R.drawable.ic_sunny, R.drawable.ic_mostly_sunny,
         R.drawable.ic_partly_cloudy, R.drawable.ic_mostly_cloudy,
-        R.drawable.ic_cloudy, R.drawable.ic_haze, R.drawable.ic_mist,
+        R.drawable.ic_cloudy, R.drawable.ic_mist, R.drawable.ic_mist,
         R.drawable.ic_fog, R.drawable.ic_fog,
         R.drawable.ic_scattered_showers, R.drawable.ic_showers,
         R.drawable.ic_showers, R.drawable.ic_light_rain,
