@@ -132,19 +132,22 @@ public class Weather extends Activity
     {
         "Sunny", "Mostly sunny", "Partly cloudy", "Mostly cloudy",
         "Cloudy", "Haze", "Mist", "Fog", "Scattered showers",
-        "Showers", "Light rain", "Rain", "Heavy rain", "Snow showers",
-        "Snow", "Clear", "Clear with periodic clouds"
+        "Showers", "Light rain", "Rain", "Hail", "Rain and sleet",
+        "Snow showers", "Light snow", "Snow", "Clear",
+        "Clear with periodic clouds"
     };
 
     public static final int IMAGES[] =
     {
         R.drawable.ic_sunny, R.drawable.ic_mostly_sunny,
         R.drawable.ic_partly_cloudy, R.drawable.ic_mostly_cloudy,
-        R.drawable.ic_cloudy, R.drawable.ic_mist, R.drawable.ic_fog,
-        R.drawable.ic_fog, R.drawable.ic_showers,
+        R.drawable.ic_cloudy, R.drawable.ic_haze, R.drawable.ic_mist,
+        R.drawable.ic_fog, R.drawable.ic_fog,
+        R.drawable.ic_scattered_showers, R.drawable.ic_showers,
         R.drawable.ic_showers, R.drawable.ic_light_rain,
-        R.drawable.ic_rain, R.drawable.ic_heavy_rain,
-        R.drawable.ic_snow_showers, R.drawable.ic_snow,
+        R.drawable.ic_rain, R.drawable.ic_hail,
+        R.drawable.ic_rain_and_sleet, R.drawable.ic_snow_showers,
+        R.drawable.ic_light_snow, R.drawable.ic_snow,
         R.drawable.ic_clear, R.drawable.ic_clear_clouds
     };
 
@@ -268,6 +271,9 @@ public class Weather extends Activity
 
         setTitle(savedInstanceState.getCharSequence(LOCN));
 
+        if (savedInstanceState.getCharSequence(DATE) == null)
+            return;
+
         dateText.setText(savedInstanceState.getCharSequence(DATE));
         windText.setText(savedInstanceState.getCharSequence(WIND));
         humidityText.setText(savedInstanceState.getCharSequence(HUMID));
@@ -338,6 +344,9 @@ public class Weather extends Activity
         super.onSaveInstanceState(outState);
 
         outState.putCharSequence(LOCN, getTitle());
+
+        if (dateText.getText() == null || dateText.getText().length() == 0)
+            return;
 
         outState.putCharSequence(DATE, dateText.getText());
         outState.putCharSequence(DESC, descriptionText.getText());
