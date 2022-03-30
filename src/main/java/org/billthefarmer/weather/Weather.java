@@ -98,10 +98,13 @@ public class Weather extends Activity
 
     public static final String ADDR_FORMAT = "%s, %s, %s";
 
+    public static final String PREF_TEMP = "pref_temp";
+
     public static final String DATE = "date";
     public static final String DESC = "desc";
     public static final String LOCN = "locn";
-    public static final String TEMP = "temp";
+    public static final String CENT = "cent";
+    public static final String FAHR = "fahr";
     public static final String WIND = "wind";
     public static final String HUMID = "humid";
     public static final String PRECIP = "precip";
@@ -132,8 +135,8 @@ public class Weather extends Activity
     {
         "Sunny", "Mostly sunny", "Partly cloudy", "Mostly cloudy",
         "Cloudy", "Haze", "Mist", "Fog", "Scattered showers",
-        "Showers", "Light rain", "Rain", "Hail", "Rain and sleet",
-        "Snow showers", "Light snow", "Snow", "Clear",
+        "Light rain showers", "Showers", "Light rain", "Rain", "Hail",
+        "Rain and sleet", "Snow showers", "Light snow", "Snow", "Clear",
         "Clear with periodic clouds"
     };
 
@@ -143,9 +146,9 @@ public class Weather extends Activity
         R.drawable.ic_partly_cloudy, R.drawable.ic_mostly_cloudy,
         R.drawable.ic_cloudy, R.drawable.ic_mist, R.drawable.ic_mist,
         R.drawable.ic_fog, R.drawable.ic_fog,
-        R.drawable.ic_scattered_showers, R.drawable.ic_showers,
-        R.drawable.ic_showers, R.drawable.ic_light_rain,
-        R.drawable.ic_rain, R.drawable.ic_hail,
+        R.drawable.ic_scattered_showers, R.drawable.ic_scattered_showers,
+        R.drawable.ic_showers, R.drawable.ic_showers,
+        R.drawable.ic_light_rain, R.drawable.ic_rain, R.drawable.ic_hail,
         R.drawable.ic_rain_and_sleet, R.drawable.ic_snow_showers,
         R.drawable.ic_light_snow, R.drawable.ic_snow,
         R.drawable.ic_clear, R.drawable.ic_clear_clouds
@@ -155,6 +158,9 @@ public class Weather extends Activity
     public static final int LONG_DELAY = 300000;
     public static final int ADDRESSES = 10;
 
+    public static final int CENTIGRADE = 1;
+    public static final int FAHRENHEIT = 2;
+
     private Toast toast;
 
     private ImageView weatherImage;
@@ -163,7 +169,8 @@ public class Weather extends Activity
     private TextView windText;
     private TextView humidityText;
     private TextView descriptionText;
-    private TextView temperatureText;
+    private TextView centigradeText;
+    private TextView fahrenheitText;
     private TextView precipitationText;
 
     private ViewGroup dayGroup;
@@ -171,6 +178,8 @@ public class Weather extends Activity
     private ProgressBar progress;
 
     private LocationListener listener;
+
+    private int temperature;
 
     // Called when the activity is first created.
     @Override
@@ -181,6 +190,8 @@ public class Weather extends Activity
         SharedPreferences preferences =
             PreferenceManager.getDefaultSharedPreferences(this);
 
+        temperature = preferences.getInt(PREF_TEMP, CENTIGRADE);
+
         setContentView(R.layout.main);
 
         weatherImage = findViewById(R.id.weather);
@@ -189,7 +200,8 @@ public class Weather extends Activity
         windText = findViewById(R.id.wind);
         humidityText = findViewById(R.id.humidity);
         descriptionText = findViewById(R.id.description);
-        temperatureText = findViewById(R.id.temperature);
+        centigradeText = findViewById(R.id.centigrade);
+        fahrenheitText = findViewById(R.id.fahrenheit);
         precipitationText = findViewById(R.id.precipitation);
 
         dayGroup = findViewById(R.id.days);
@@ -279,8 +291,10 @@ public class Weather extends Activity
         humidityText.setText(savedInstanceState.getCharSequence(HUMID));
         descriptionText.setText(savedInstanceState
                                 .getCharSequence(DESC));
-        temperatureText.setText(savedInstanceState
-                                .getCharSequence(TEMP));
+        centigradeText.setText(savedInstanceState
+                               .getCharSequence(CENT));
+        fahrenheitText.setText(savedInstanceState
+                               .getCharSequence(FAHR));
         precipitationText.setText(savedInstanceState
                                   .getCharSequence(PRECIP));
 
@@ -306,17 +320,30 @@ public class Weather extends Activity
             ViewGroup g = (ViewGroup) group.getChildAt(1);
             ViewGroup gw = (ViewGroup) g.getChildAt(0);
             ViewGroup gt = (ViewGroup) g.getChildAt(1);
+            ViewGroup gc = (ViewGroup) gt.getChildAt(0);
+            ViewGroup gf = (ViewGroup) gt.getChildAt(1);
 
             TextView text = (TextView) gw.getChildAt(0);
             text.setText(days.get(i));
             text = (TextView) gw.getChildAt(1);
             text.setText(descs.get(i));
-            text = (TextView) gt.getChildAt(0);
-            text.setText(dtemps.get(i));
-            text = (TextView) gt.getChildAt(1);
-            text.setText(ntemps.get(i));
+            switch (temperature)
+            {
+            case CENTIGRADE:
+                text = (TextView) gc.getChildAt(0);
+                text.setText(dtemps.get(i));
+                text = (TextView) gc.getChildAt(1);
+                text.setText(ntemps.get(i));
+                break;
 
-            ImageView image = (ImageView) group.getChildAt(0);
+            case FAHRENHEIT:
+                text = (TextView) gf.getChildAt(0);
+                text.setText(dtemps.get(i));
+                text = (TextView) gf.getChildAt(1);
+                text.setText(ntemps.get(i));
+                break;
+            }
+                ImageView image = (ImageView) group.getChildAt(0);
             for (int j = 0; i < DESCRIPTIONS.length; j++)
             {
                 if (DESCRIPTIONS[j].contentEquals(descs.get(i)))
@@ -333,6 +360,12 @@ public class Weather extends Activity
     protected void onResume()
     {
         super.onResume();
+
+        SharedPreferences preferences =
+            PreferenceManager.getDefaultSharedPreferences(this);
+
+        temp(preferences.getInt(PREF_TEMP, CENTIGRADE));
+
         getActionBar().setIcon(R.drawable.ic_action_location_searching);
         refresh();
     }
@@ -350,7 +383,8 @@ public class Weather extends Activity
 
         outState.putCharSequence(DATE, dateText.getText());
         outState.putCharSequence(DESC, descriptionText.getText());
-        outState.putCharSequence(TEMP, temperatureText.getText());
+        outState.putCharSequence(CENT, centigradeText.getText());
+        outState.putCharSequence(FAHR, fahrenheitText.getText());
         outState.putCharSequence(WIND, windText.getText());
         outState.putCharSequence(HUMID, humidityText.getText());
         outState.putCharSequence(PRECIP, precipitationText.getText());
@@ -366,15 +400,29 @@ public class Weather extends Activity
             ViewGroup g = (ViewGroup) group.getChildAt(1);
             ViewGroup gw = (ViewGroup) g.getChildAt(0);
             ViewGroup gt = (ViewGroup) g.getChildAt(1);
+            ViewGroup gc = (ViewGroup) gt.getChildAt(0);
+            ViewGroup gf = (ViewGroup) gt.getChildAt(1);
 
             TextView text = (TextView) gw.getChildAt(0);
             days.add(text.getText().toString());
             text = (TextView) gw.getChildAt(1);
             descs.add(text.getText().toString());
-            text = (TextView) gt.getChildAt(0);
-            dtemps.add(text.getText().toString());
-            text = (TextView) gt.getChildAt(1);
-            ntemps.add(text.getText().toString());
+            switch(temperature)
+            {
+            case CENTIGRADE:
+                text = (TextView) gc.getChildAt(0);
+                dtemps.add(text.getText().toString());
+                text = (TextView) gc.getChildAt(1);
+                ntemps.add(text.getText().toString());
+                break;
+
+            case FAHRENHEIT:
+                text = (TextView) gf.getChildAt(0);
+                dtemps.add(text.getText().toString());
+                text = (TextView) gf.getChildAt(1);
+                ntemps.add(text.getText().toString());
+                break;
+            }
         }
 
         outState.putStringArrayList(DAYS, days);
@@ -392,6 +440,8 @@ public class Weather extends Activity
         SharedPreferences preferences =
             PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = preferences.edit();
+
+        editor.putInt(PREF_TEMP, temperature);
 
         editor.apply();
 
@@ -421,6 +471,13 @@ public class Weather extends Activity
         int id = item.getItemId();
         switch (id)
         {
+        case R.id.cent:
+            temp(CENTIGRADE);
+            break;
+
+        case R.id.fahr:
+            temp(FAHRENHEIT);
+            break;
 
         case R.id.help:
             help();
@@ -562,9 +619,12 @@ public class Weather extends Activity
             }
         }
 
-        String temperature = weather.getElementById(WOB_TM).text();
+        String centigrade = weather.getElementById(WOB_TM).text();
         String format = getString(R.string.centigrade);
-        temperatureText.setText(String.format(format, temperature));
+        centigradeText.setText(String.format(format, centigrade));
+        String fahrenheit = weather.getElementById(WOB_TTM).text();
+        format = getString(R.string.fahrenheit);
+        fahrenheitText.setText(String.format(format, fahrenheit));
 
         String wind = weather.getElementById(WOB_WS).text();
         windText.setText(wind);
@@ -598,6 +658,8 @@ public class Weather extends Activity
             ViewGroup g = (ViewGroup) group.getChildAt(1);
             ViewGroup gw = (ViewGroup) g.getChildAt(0);
             ViewGroup gt = (ViewGroup) g.getChildAt(1);
+            ViewGroup gc = (ViewGroup) gt.getChildAt(0);
+            ViewGroup gf = (ViewGroup) gt.getChildAt(1);
             
             TextView text = (TextView) gw.getChildAt(0);
             text.setText(d);
@@ -605,12 +667,60 @@ public class Weather extends Activity
             text.setText(w);
             Elements tt = day.getElementsByClass(WOB_T);
             format = getString(R.string.centigrade);
-            text = (TextView) gt.getChildAt(0);
+            text = (TextView) gc.getChildAt(0);
             String td = tt.get(0).text();
             text.setText(String.format(format, td));
-            text = (TextView) gt.getChildAt(1);
+            text = (TextView) gc.getChildAt(1);
             String tn = tt.get(2).text();
             text.setText(String.format(format, tn));
+            format = getString(R.string.fahrenheit);
+            text = (TextView) gf.getChildAt(0);
+            td = tt.get(1).text();
+            text.setText(String.format(format, td));
+            text = (TextView) gf.getChildAt(1);
+            tn = tt.get(3).text();
+            text.setText(String.format(format, tn));
+        }
+    }
+
+    // temp
+    private void temp(int temp)
+    {
+        temperature = temp;
+
+        switch (temp)
+        {
+        case CENTIGRADE:
+            centigradeText.setVisibility(View.VISIBLE);
+            fahrenheitText.setVisibility(View.GONE);
+            break;
+
+        case FAHRENHEIT:
+            centigradeText.setVisibility(View.GONE);
+            fahrenheitText.setVisibility(View.VISIBLE);
+            break;
+        }
+
+        for (int i = 0; i < dayGroup.getChildCount(); i++)
+        {
+            ViewGroup group = (ViewGroup) dayGroup.getChildAt(i);
+            ViewGroup g = (ViewGroup) group.getChildAt(1);
+            ViewGroup gt = (ViewGroup) g.getChildAt(1);
+            ViewGroup gc = (ViewGroup) gt.getChildAt(0);
+            ViewGroup gf = (ViewGroup) gt.getChildAt(1);
+
+            switch (temp)
+            {
+            case CENTIGRADE:
+                gc.setVisibility(View.VISIBLE);
+                gf.setVisibility(View.GONE);
+                break;
+
+            case FAHRENHEIT:
+                gc.setVisibility(View.GONE);
+                gf.setVisibility(View.VISIBLE);
+                break;
+            }
         }
     }
 
