@@ -72,8 +72,10 @@ import java.text.SimpleDateFormat;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -133,25 +135,52 @@ public class Weather extends Activity
 
     public static final String DESCRIPTIONS[] =
     {
-        "Sunny", "Mostly sunny", "Partly cloudy", "Mostly cloudy",
-        "Cloudy", "Haze", "Mist", "Fog", "Scattered showers",
-        "Light rain showers", "Showers", "Light rain", "Rain", "Hail",
-        "Rain and sleet", "Snow showers", "Light snow", "Snow", "Clear",
+        "Sunny",
+        "Mostly sunny",
+        "Partly cloudy",
+        "Mostly cloudy",
+        "Cloudy",
+        "Haze",
+        "Mist",
+        "Fog",
+        "Scattered showers",
+        "Light rain showers",
+        "Showers",
+        "Light rain",
+        "Rain",
+        "Hail",
+        "Rain and snow",
+        "Rain and sleet",
+        "Snow showers",
+        "Light snow",
+        "Snow",
+        "Clear",
         "Clear with periodic clouds"
     };
 
     public static final int IMAGES[] =
     {
-        R.drawable.ic_sunny, R.drawable.ic_mostly_sunny,
-        R.drawable.ic_partly_cloudy, R.drawable.ic_mostly_cloudy,
-        R.drawable.ic_cloudy, R.drawable.ic_mist, R.drawable.ic_mist,
-        R.drawable.ic_fog, R.drawable.ic_fog,
-        R.drawable.ic_scattered_showers, R.drawable.ic_scattered_showers,
-        R.drawable.ic_showers, R.drawable.ic_showers,
-        R.drawable.ic_light_rain, R.drawable.ic_rain, R.drawable.ic_hail,
-        R.drawable.ic_rain_and_sleet, R.drawable.ic_snow_showers,
-        R.drawable.ic_light_snow, R.drawable.ic_snow,
-        R.drawable.ic_clear, R.drawable.ic_clear_clouds
+        R.drawable.ic_sunny,
+        R.drawable.ic_mostly_sunny,
+        R.drawable.ic_partly_cloudy,
+        R.drawable.ic_mostly_cloudy,
+        R.drawable.ic_cloudy,
+        R.drawable.ic_haze,
+        R.drawable.ic_mist,
+        R.drawable.ic_fog,
+        R.drawable.ic_scattered_showers,
+        R.drawable.ic_scattered_showers,
+        R.drawable.ic_showers,
+        R.drawable.ic_light_rain,
+        R.drawable.ic_rain,
+        R.drawable.ic_hail,
+        R.drawable.ic_rain_and_snow,
+        R.drawable.ic_rain_and_sleet,
+        R.drawable.ic_snow_showers,
+        R.drawable.ic_light_snow,
+        R.drawable.ic_snow,
+        R.drawable.ic_clear,
+        R.drawable.ic_clear_clouds
     };
 
     public static final int REQUEST_PERMS = 1;
@@ -160,6 +189,8 @@ public class Weather extends Activity
 
     public static final int CENTIGRADE = 1;
     public static final int FAHRENHEIT = 2;
+
+    private Map<CharSequence, Integer> imageMap;
 
     private Toast toast;
 
@@ -207,6 +238,11 @@ public class Weather extends Activity
         dayGroup = findViewById(R.id.days);
 
         progress = findViewById(R.id.progress);
+
+        imageMap = new HashMap<CharSequence, Integer>();
+        int index = 0;
+        for (String key: DESCRIPTIONS)
+            imageMap.put(key, IMAGES[index++]);
 
         Weather weather = this;
         listener = new LocationListener()
@@ -298,14 +334,7 @@ public class Weather extends Activity
         precipitationText.setText(savedInstanceState
                                   .getCharSequence(PRECIP));
 
-        for (int i = 0; i < DESCRIPTIONS.length; i++)
-        {
-            if (DESCRIPTIONS[i].contentEquals(descriptionText.getText()))
-            {
-                weatherImage.setImageResource(IMAGES[i]);
-                break;
-            }
-        }
+        weatherImage.setImageResource(imageMap.get(descriptionText.getText()));
 
         ArrayList<String> days = savedInstanceState.getStringArrayList(DAYS);
         ArrayList<String> descs = savedInstanceState.getStringArrayList(DESCS);
@@ -343,15 +372,9 @@ public class Weather extends Activity
                 text.setText(ntemps.get(i));
                 break;
             }
-                ImageView image = (ImageView) group.getChildAt(0);
-            for (int j = 0; i < DESCRIPTIONS.length; j++)
-            {
-                if (DESCRIPTIONS[j].contentEquals(descs.get(i)))
-                {
-                    image.setImageResource(IMAGES[j]);
-                    break;
-                }
-            }
+
+            ImageView image = (ImageView) group.getChildAt(0);
+            image.setImageResource(imageMap.get(descs.get(i)));
         }
     }
 
@@ -610,14 +633,7 @@ public class Weather extends Activity
         dateText.setText(date);
         String description = weather.getElementById(WOB_DC).text();
         descriptionText.setText(description);
-        for (int i = 0; i < DESCRIPTIONS.length; i++)
-        {
-            if (DESCRIPTIONS[i].equals(description))
-            {
-                weatherImage.setImageResource(IMAGES[i]);
-                break;
-            }
-        }
+        weatherImage.setImageResource(imageMap.get(description));
 
         String centigrade = weather.getElementById(WOB_TM).text();
         String format = getString(R.string.centigrade);
@@ -646,15 +662,10 @@ public class Weather extends Activity
             String d = day.getElementsByClass(Z1VZSB).first().text();
             String w = day.getElementsByClass(UW5PK).first().attr("alt");
             ViewGroup group = (ViewGroup) dayGroup.getChildAt(index++);
+
             ImageView image = (ImageView) group.getChildAt(0);
-            for (int i = 0; i < DESCRIPTIONS.length; i++)
-            {
-                if (DESCRIPTIONS[i].contentEquals(w))
-                {
-                    image.setImageResource(IMAGES[i]);
-                    break;
-                }
-            }
+            image.setImageResource(imageMap.get(w));
+
             ViewGroup g = (ViewGroup) group.getChildAt(1);
             ViewGroup gw = (ViewGroup) g.getChildAt(0);
             ViewGroup gt = (ViewGroup) g.getChildAt(1);
