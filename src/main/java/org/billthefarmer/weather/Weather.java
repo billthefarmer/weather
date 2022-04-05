@@ -154,6 +154,8 @@ public class Weather extends Activity
         "Snow showers",
         "Light snow",
         "Snow",
+        "Thundery showers",
+        "Thunder",
         "Clear",
         "Clear with periodic clouds"
     };
@@ -179,6 +181,8 @@ public class Weather extends Activity
         R.drawable.ic_snow_showers,
         R.drawable.ic_light_snow,
         R.drawable.ic_snow,
+        R.drawable.ic_thunder,
+        R.drawable.ic_thundery_showers,
         R.drawable.ic_clear,
         R.drawable.ic_clear_clouds
     };
