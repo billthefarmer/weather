@@ -160,7 +160,7 @@ public class Weather extends Activity
         "Clear with periodic clouds"
     };
 
-    public static final int IMAGES[] =
+    public static final int DAY_IMAGES[] =
     {
         R.drawable.ic_sunny,
         R.drawable.ic_mostly_sunny,
@@ -184,7 +184,34 @@ public class Weather extends Activity
         R.drawable.ic_thunder,
         R.drawable.ic_thundery_showers,
         R.drawable.ic_clear,
-        R.drawable.ic_clear_clouds
+        R.drawable.ic_clear_cloudy
+    };
+
+    public static final int NIGHT_IMAGES[] =
+    {
+        R.drawable.ic_sunny,
+        R.drawable.ic_mostly_sunny,
+        R.drawable.ic_clear_cloudy,
+        R.drawable.ic_clear_cloudy,
+        R.drawable.ic_cloudy,
+        R.drawable.ic_haze,
+        R.drawable.ic_mist,
+        R.drawable.ic_fog,
+        R.drawable.ic_clear_scattered_showers,
+        R.drawable.ic_clear_scattered_showers,
+        R.drawable.ic_clear_showers,
+        R.drawable.ic_light_rain,
+        R.drawable.ic_rain,
+        R.drawable.ic_hail,
+        R.drawable.ic_rain_and_snow,
+        R.drawable.ic_rain_and_sleet,
+        R.drawable.ic_clear_snow_showers,
+        R.drawable.ic_light_snow,
+        R.drawable.ic_snow,
+        R.drawable.ic_thunder,
+        R.drawable.ic_clear_thundery_showers,
+        R.drawable.ic_clear,
+        R.drawable.ic_clear_cloudy
     };
 
     public static final int REQUEST_PERMS = 1;
@@ -195,6 +222,7 @@ public class Weather extends Activity
     public static final int FAHRENHEIT = 2;
 
     private Map<CharSequence, Integer> imageMap;
+    private Map<CharSequence, Integer> nightMap;
 
     private Toast toast;
 
@@ -244,9 +272,13 @@ public class Weather extends Activity
         progress = findViewById(R.id.progress);
 
         imageMap = new HashMap<CharSequence, Integer>();
+        nightMap = new HashMap<CharSequence, Integer>();
         int index = 0;
         for (String key: DESCRIPTIONS)
-            imageMap.put(key, IMAGES[index++]);
+        {
+            imageMap.put(key, DAY_IMAGES[index]);
+            nightMap.put(key, NIGHT_IMAGES[index++]);
+        }
 
         Weather weather = this;
         listener = new LocationListener()
