@@ -71,6 +71,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -661,6 +662,10 @@ public class Weather extends Activity
             return;
         }
 
+        Calendar calendar = Calendar.getInstance();
+        boolean night = ((calendar.get(Calendar.HOUR_OF_DAY) < 6) ||
+                         (calendar.get(Calendar.HOUR_OF_DAY) > 18));
+
         String location = weather.getElementById(WOB_LOC).text();
         getActionBar().setIcon(R.drawable.ic_action_location_found);
         setTitle(location);
@@ -669,7 +674,8 @@ public class Weather extends Activity
         dateText.setText(date);
         String description = weather.getElementById(WOB_DC).text();
         descriptionText.setText(description);
-        weatherImage.setImageResource(imageMap.get(description));
+        weatherImage.setImageResource(night? nightMap.get(description):
+                                      imageMap.get(description));
 
         String centigrade = weather.getElementById(WOB_TM).text();
         String format = getString(R.string.centigrade);
