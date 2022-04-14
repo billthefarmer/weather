@@ -27,6 +27,8 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -103,6 +105,15 @@ public class Weather extends Activity
 
     public static final String PREF_TEMP = "pref_temp";
 
+    public static final String PREF_DATE = "pref_date";
+    public static final String PREF_DESC = "pref_desc";
+    public static final String PREF_LOCN = "pref_locn";
+    public static final String PREF_CENT = "pref_cent";
+    public static final String PREF_FAHR = "pref_fahr";
+    public static final String PREF_WIND = "pref_wind";
+    public static final String PREF_HUMID = "pref_humid";
+    public static final String PREF_PRECIP = "pref_precip";
+
     public static final String DATE = "date";
     public static final String DESC = "desc";
     public static final String LOCN = "locn";
@@ -133,6 +144,29 @@ public class Weather extends Activity
     public static final String Z1VZSB = "Z1VzSb";
     public static final String UW5PK = "uW5pk";
     public static final String WOB_T = "wob_t";
+
+    /*
+      Clear
+      Clear with periodic clouds
+      Cloudy
+      Fog
+      Haze
+      Light drizzle
+      Light rain showers
+      Light snow
+      Light thunderstorms and rain
+      Mostly cloudy
+      Mostly sunny
+      Partly cloudy
+      Patches of fog
+      Rain
+      Scattered showers
+      Scattered thunderstorms
+      Smoke
+      Snow showers
+      Sunny
+      Windy
+    */
 
     public static final String DESCRIPTIONS[] =
     {
@@ -426,6 +460,21 @@ public class Weather extends Activity
 
         temp(preferences.getInt(PREF_TEMP, CENTIGRADE));
 
+        if (preferences.contains(PREF_DATE))
+        {
+            setTitle(preferences.getString(PREF_LOCN, ""));
+            dateText.setText(preferences.getString(PREF_DATE, ""));
+            windText.setText(preferences.getString(PREF_WIND, ""));
+            humidityText.setText(preferences.getString(PREF_HUMID, ""));
+            descriptionText.setText(preferences.getString(PREF_DESC, ""));
+            centigradeText.setText(preferences.getString(PREF_CENT, ""));
+            fahrenheitText.setText(preferences.getString(PREF_FAHR, ""));
+            precipitationText.setText(preferences.getString(PREF_PRECIP, ""));
+
+            weatherImage.setImageResource
+                (imageMap.get(descriptionText.getText()));
+        }
+
         getActionBar().setIcon(R.drawable.ic_action_location_searching);
         refresh();
     }
@@ -502,6 +551,15 @@ public class Weather extends Activity
         SharedPreferences.Editor editor = preferences.edit();
 
         editor.putInt(PREF_TEMP, temperature);
+
+        editor.putString(PREF_LOCN, getTitle().toString());
+        editor.putString(PREF_DATE, dateText.getText().toString());
+        editor.putString(PREF_DESC, descriptionText.getText().toString());
+        editor.putString(PREF_CENT, centigradeText.getText().toString());
+        editor.putString(PREF_FAHR, fahrenheitText.getText().toString());
+        editor.putString(PREF_WIND, windText.getText().toString());
+        editor.putString(PREF_HUMID, humidityText.getText().toString());
+        editor.putString(PREF_PRECIP, precipitationText.getText().toString());
 
         editor.apply();
 
@@ -736,6 +794,20 @@ public class Weather extends Activity
         }
     }
 
+    // updateWidgets
+    @SuppressWarnings("deprecation")
+    private void updateWidgets()
+    {
+
+        AppWidgetManager manager = AppWidgetManager.getInstance(this);
+        ComponentName provider = new
+            ComponentName(this, WeatherWidgetProvider.class);
+        RemoteViews views = new
+            RemoteViews(getPackageName(), R.layout.widget);
+
+        manager.updateAppWidget(provider, views);
+    }
+
     // temp
     private void temp(int temp)
     {
@@ -867,11 +939,7 @@ public class Weather extends Activity
 
             catch (Exception e)
             {
-                weather.runOnUiThread(() ->
-                {
-                    // weather.textView.append("Exception " + e.toString());
-                });
-
+                weather.runOnUiThread(() -> weather.showToast(R.string.noData));
                 e.printStackTrace();
             }
 
@@ -887,6 +955,7 @@ public class Weather extends Activity
                 return;
 
             weather.display(doc);
+            weather.updateWidgets();
         }
     }
 }
