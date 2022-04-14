@@ -412,7 +412,13 @@ public class Weather extends Activity
         precipitationText.setText(savedInstanceState
                                   .getCharSequence(PRECIP));
 
-        weatherImage.setImageResource(imageMap.get(descriptionText.getText()));
+        Calendar calendar = Calendar.getInstance();
+        boolean night = ((calendar.get(Calendar.HOUR_OF_DAY) < 6) ||
+                         (calendar.get(Calendar.HOUR_OF_DAY) > 18));
+
+        weatherImage.setImageResource
+            (night? nightMap.get(descriptionText.getText()):
+             imageMap.get(descriptionText.getText()));
 
         ArrayList<String> days = savedInstanceState.getStringArrayList(DAYS);
         ArrayList<String> descs = savedInstanceState.getStringArrayList(DESCS);
@@ -478,8 +484,13 @@ public class Weather extends Activity
             fahrenheitText.setText(preferences.getString(PREF_FAHR, ""));
             precipitationText.setText(preferences.getString(PREF_PRECIP, ""));
 
+            Calendar calendar = Calendar.getInstance();
+            boolean night = ((calendar.get(Calendar.HOUR_OF_DAY) < 6) ||
+                             (calendar.get(Calendar.HOUR_OF_DAY) > 18));
+
             weatherImage.setImageResource
-                (imageMap.get(descriptionText.getText()));
+                (night? nightMap.get(descriptionText.getText()):
+                 imageMap.get(descriptionText.getText()));
         }
 
         getActionBar().setIcon(R.drawable.ic_action_location_searching);
