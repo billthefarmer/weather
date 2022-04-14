@@ -32,6 +32,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.view.View;
 import android.widget.RemoteViews;
 
 import java.util.Calendar;
@@ -59,7 +60,6 @@ public class WeatherWidgetProvider extends AppWidgetProvider
                          AppWidgetManager appWidgetManager,
                          int[] appWidgetIds)
     {
-
         SharedPreferences preferences =
             PreferenceManager.getDefaultSharedPreferences(context);
 
@@ -75,8 +75,6 @@ public class WeatherWidgetProvider extends AppWidgetProvider
         RemoteViews views = new
             RemoteViews(context.getPackageName(), R.layout.widget);
         views.setOnClickPendingIntent(R.id.widget, pendingIntent);
-
-        int temp = preferences.getInt(Weather.PREF_TEMP, Weather.CENTIGRADE);
 
         if (preferences.contains(Weather.PREF_DATE))
         {
@@ -112,10 +110,26 @@ public class WeatherWidgetProvider extends AppWidgetProvider
             views.setImageViewResource
                 (R.id.weather,
                  imageMap.get(preferences.getString(Weather.PREF_DESC, "")));
-        }
 
-        // Tell the AppWidgetManager to perform an update on the app
-        // widgets.
-        appWidgetManager.updateAppWidget(appWidgetIds, views);
+            int temperature =
+                preferences.getInt(Weather.PREF_TEMP, Weather.CENTIGRADE);
+
+            switch (temperature)
+            {
+            case Weather.CENTIGRADE:
+                views.setViewVisibility(R.id.centigrade, View.VISIBLE);
+                views.setViewVisibility(R.id.fahrenheit, View.GONE);
+                break;
+
+            case Weather.FAHRENHEIT:
+                views.setViewVisibility(R.id.centigrade, View.GONE);
+                views.setViewVisibility(R.id.fahrenheit, View.VISIBLE);
+                break;
+            }
+
+            // Tell the AppWidgetManager to perform an update on the app
+            // widgets.
+            appWidgetManager.updateAppWidget(appWidgetIds, views);
+        }
     }
 }

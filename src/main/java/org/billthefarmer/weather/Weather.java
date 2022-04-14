@@ -58,6 +58,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.RemoteViews;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -146,6 +147,7 @@ public class Weather extends Activity
     public static final String WOB_T = "wob_t";
 
     /*
+      Blowing widespread dust
       Clear
       Clear with periodic clouds
       Cloudy
@@ -155,16 +157,21 @@ public class Weather extends Activity
       Light rain showers
       Light snow
       Light thunderstorms and rain
+      Mist
       Mostly cloudy
       Mostly sunny
       Partly cloudy
       Patches of fog
       Rain
+      Rain and snow
       Scattered showers
       Scattered thunderstorms
       Smoke
+      Snow
       Snow showers
       Sunny
+      Thunderstorm
+      Wind and rain
       Windy
     */
 
@@ -563,6 +570,9 @@ public class Weather extends Activity
 
         editor.apply();
 
+        // Update widgets
+        updateWidgets();
+
         LocationManager locationManager = (LocationManager)
             getSystemService(LOCATION_SERVICE);
 
@@ -798,6 +808,8 @@ public class Weather extends Activity
     @SuppressWarnings("deprecation")
     private void updateWidgets()
     {
+        SharedPreferences preferences =
+            PreferenceManager.getDefaultSharedPreferences(this);
 
         AppWidgetManager manager = AppWidgetManager.getInstance(this);
         ComponentName provider = new
@@ -805,7 +817,49 @@ public class Weather extends Activity
         RemoteViews views = new
             RemoteViews(getPackageName(), R.layout.widget);
 
-        manager.updateAppWidget(provider, views);
+        if (preferences.contains(Weather.PREF_DATE))
+        {
+            views.setTextViewText(R.id.location,
+                                  preferences.getString(Weather.PREF_LOCN, ""));
+            views.setTextViewText(R.id.date,
+                                  preferences.getString(Weather.PREF_DATE, ""));
+            views.setTextViewText(R.id.wind,
+                                  preferences.getString(Weather.PREF_WIND, ""));
+            views.setTextViewText(R.id.humidity,
+                                  preferences.getString(Weather.PREF_HUMID, ""));
+            views.setTextViewText(R.id.description,
+                                  preferences.getString(Weather.PREF_DESC, ""));
+            views.setTextViewText(R.id.centigrade,
+                                  preferences.getString(Weather.PREF_CENT, ""));
+            views.setTextViewText(R.id.fahrenheit,
+                                  preferences.getString(Weather.PREF_FAHR, ""));
+            views.setTextViewText(R.id.precipitation,
+                                  preferences.getString(Weather.PREF_PRECIP, ""));
+
+            Calendar calendar = Calendar.getInstance();
+            boolean night = ((calendar.get(Calendar.HOUR_OF_DAY) < 6) ||
+                             (calendar.get(Calendar.HOUR_OF_DAY) > 18));
+
+            views.setImageViewResource
+                (R.id.weather, night?
+                 nightMap.get(preferences.getString(Weather.PREF_DESC, "")):
+                 imageMap.get(preferences.getString(Weather.PREF_DESC, "")));
+
+            switch (temperature)
+            {
+            case CENTIGRADE:
+                views.setViewVisibility(R.id.centigrade, View.VISIBLE);
+                views.setViewVisibility(R.id.fahrenheit, View.GONE);
+                break;
+
+            case FAHRENHEIT:
+                views.setViewVisibility(R.id.centigrade, View.GONE);
+                views.setViewVisibility(R.id.fahrenheit, View.VISIBLE);
+                break;
+            }
+
+            manager.updateAppWidget(provider, views);
+        }
     }
 
     // temp
@@ -955,7 +1009,6 @@ public class Weather extends Activity
                 return;
 
             weather.display(doc);
-            weather.updateWidgets();
         }
     }
 }
