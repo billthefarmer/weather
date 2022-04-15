@@ -322,59 +322,12 @@ public class Weather extends Activity
             nightMap.put(key, NIGHT_IMAGES[index++]);
         }
 
-        Weather weather = this;
         listener = new LocationListener()
         {
             @Override
             public void onLocationChanged(Location location)
             {
-                double lat = location.getLatitude();
-                double lng = location.getLongitude();
-
-                if (!Geocoder.isPresent())
-                {
-                    progress.setVisibility(View.GONE);
-                    showToast(R.string.noGeo);
-                    return;
-                }
-
-                Geocoder geocoder = new Geocoder(weather);
-
-                try
-                {
-                    List<Address> addressList =
-                        geocoder.getFromLocation(lat, lng, ADDRESSES);
-
-                    if (addressList == null)
-                    {
-                        showToast(R.string.noAddr);
-                        return;
-                    }
-
-                    String locality = null;
-                    for (Address address: addressList.toArray(new Address[0]))
-                    {
-                        if (address.getLocality() != null)
-                        {
-                            locality = String.format(ADDR_FORMAT,
-                                                     address.getLocality(),
-                                                     address.getSubAdminArea(),
-                                                     address.getCountryName());
-                            break;
-                        }
-                    }
-
-                    progress.setVisibility(View.VISIBLE);
-
-                    String url = String.format(GOOGLE_URL, locality);
-                    GoogleTask task = new GoogleTask(weather);
-                    task.execute(url);
-                }
-
-                catch (Exception e)
-                {
-                    e.printStackTrace();
-                }
+                located(location);
             }
 
             @Override
@@ -385,7 +338,6 @@ public class Weather extends Activity
 
             @Override
             public void onProviderDisabled(String provider) {}
-
         };
     }
 
@@ -674,7 +626,13 @@ public class Weather extends Activity
             return;
         }
 
-	double lat = location.getLatitude();
+        located(location);
+    }
+
+    // located
+    private void located(Location location)
+    {
+        double lat = location.getLatitude();
 	double lng = location.getLongitude();
 
         if (!Geocoder.isPresent())
@@ -693,6 +651,7 @@ public class Weather extends Activity
 
             if (addressList == null)
             {
+                progress.setVisibility(View.GONE);
                 showToast(R.string.noAddr);
                 return;
             }
@@ -719,6 +678,8 @@ public class Weather extends Activity
 
         catch (Exception e)
         {
+            progress.setVisibility(View.GONE);
+            showToast(R.string.noAddr);
             e.printStackTrace();
         }
     }
@@ -822,9 +783,6 @@ public class Weather extends Activity
         SharedPreferences preferences =
             PreferenceManager.getDefaultSharedPreferences(this);
 
-        AppWidgetManager manager = AppWidgetManager.getInstance(this);
-        ComponentName provider = new
-            ComponentName(this, WeatherWidgetProvider.class);
         RemoteViews views = new
             RemoteViews(getPackageName(), R.layout.widget);
 
@@ -868,6 +826,10 @@ public class Weather extends Activity
                 views.setViewVisibility(R.id.fahrenheit, View.VISIBLE);
                 break;
             }
+
+            AppWidgetManager manager = AppWidgetManager.getInstance(this);
+            ComponentName provider = new
+                ComponentName(this, WeatherWidgetProvider.class);
 
             manager.updateAppWidget(provider, views);
         }

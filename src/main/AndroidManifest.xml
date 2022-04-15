@@ -29,6 +29,9 @@
         android:name="Help"
         android:label="@string/help" />
 
+    <service
+        android:name="WeatherWidgetUpdate" />
+
     <receiver
         android:name="WeatherWidgetProvider"
         android:exported="true">

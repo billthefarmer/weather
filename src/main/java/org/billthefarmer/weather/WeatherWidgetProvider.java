@@ -27,20 +27,30 @@ import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.View;
 import android.widget.RemoteViews;
 
+import java.lang.ref.WeakReference;
+
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+
 public class WeatherWidgetProvider extends AppWidgetProvider
 {
+    private Context context;
+    private int appWidgetIds[];
 
     // onAppWidgetOptionsChanged
     @Override
@@ -60,6 +70,9 @@ public class WeatherWidgetProvider extends AppWidgetProvider
                          AppWidgetManager appWidgetManager,
                          int[] appWidgetIds)
     {
+        this.context = context;
+        this.appWidgetIds = appWidgetIds;
+
         SharedPreferences preferences =
             PreferenceManager.getDefaultSharedPreferences(context);
 
@@ -70,11 +83,23 @@ public class WeatherWidgetProvider extends AppWidgetProvider
                                       PendingIntent.FLAG_UPDATE_CURRENT |
                                       PendingIntent.FLAG_IMMUTABLE);
 
+        // Create an Intent to update Weather widget
+        Intent updateIntent = new Intent(context, WeatherWidgetProvider.class);
+        updateIntent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+        updateIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS,
+                              appWidgetIds);
+
+        PendingIntent pendingUpdate =
+            PendingIntent.getBroadcast(context, 0, updateIntent,
+                                       PendingIntent.FLAG_UPDATE_CURRENT |
+                                       PendingIntent.FLAG_IMMUTABLE);
+
         // Get the layout for the widget and attach an on-click
         // listener to the view.
         RemoteViews views = new
             RemoteViews(context.getPackageName(), R.layout.widget);
         views.setOnClickPendingIntent(R.id.widget, pendingIntent);
+        views.setOnClickPendingIntent(R.id.update, pendingUpdate);
 
         if (preferences.contains(Weather.PREF_DATE))
         {
@@ -111,8 +136,8 @@ public class WeatherWidgetProvider extends AppWidgetProvider
                 (R.id.weather,
                  imageMap.get(preferences.getString(Weather.PREF_DESC, "")));
 
-            int temperature =
-                preferences.getInt(Weather.PREF_TEMP, Weather.CENTIGRADE);
+            int temperature = preferences.getInt(Weather.PREF_TEMP,
+                                                 Weather.CENTIGRADE);
 
             switch (temperature)
             {
@@ -130,6 +155,154 @@ public class WeatherWidgetProvider extends AppWidgetProvider
             // Tell the AppWidgetManager to perform an update on the app
             // widgets.
             appWidgetManager.updateAppWidget(appWidgetIds, views);
+        }
+    }
+
+    // update
+    @SuppressLint("InlinedApi")
+    private void update(Document doc)
+    {
+        if (doc == null)
+            return;
+
+        Element weather = doc.getElementById(Weather.WOB_WC);
+        if (weather == null)
+            return;
+
+        String location = weather.getElementById(Weather.WOB_LOC).text();
+        String date = weather.getElementById(Weather.WOB_DTS).text();
+        String description = weather.getElementById(Weather.WOB_DC).text();
+
+        String centigrade = weather.getElementById(Weather.WOB_TM).text();
+        String fahrenheit = weather.getElementById(Weather.WOB_TTM).text();
+        String wind = weather.getElementById(Weather.WOB_WS).text();
+
+        String precipitation = weather.getElementById(Weather.WOB_PP).text();
+        String humidity = weather.getElementById(Weather.WOB_HM).text();
+
+        // Create an Intent to launch Weather
+        Intent intent = new Intent(context, Weather.class);
+        PendingIntent pendingIntent =
+            PendingIntent.getActivity(context, 0, intent,
+                                      PendingIntent.FLAG_UPDATE_CURRENT |
+                                      PendingIntent.FLAG_IMMUTABLE);
+
+        // Create an Intent to update Weather widget
+        Intent updateIntent = new Intent(context, WeatherWidgetProvider.class);
+        updateIntent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+        updateIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS,
+                              appWidgetIds);
+
+        PendingIntent pendingUpdate =
+            PendingIntent.getBroadcast(context, 0, updateIntent,
+                                       PendingIntent.FLAG_UPDATE_CURRENT |
+                                       PendingIntent.FLAG_IMMUTABLE);
+
+        // Get the layout for the widget and attach an on-click
+        // listener to the view.
+        RemoteViews views = new
+            RemoteViews(context.getPackageName(), R.layout.widget);
+        views.setOnClickPendingIntent(R.id.widget, pendingIntent);
+        views.setOnClickPendingIntent(R.id.update, pendingUpdate);
+
+        views.setTextViewText(R.id.location, location);
+        views.setTextViewText(R.id.date, date);
+        views.setTextViewText(R.id.description, description);
+        views.setTextViewText(R.id.wind, wind);
+        String format = context.getString(R.string.centigrade);
+        views.setTextViewText(R.id.centigrade,
+                              String.format(format, centigrade));
+        format = context.getString(R.string.fahrenheit);
+        views.setTextViewText(R.id.fahrenheit,
+                              String.format(format, fahrenheit));
+        format = context.getString(R.string.precipitation);
+        views.setTextViewText(R.id.precipitation,
+                              String.format(format, precipitation));
+        format = context.getString(R.string.humidity);
+        views.setTextViewText(R.id.humidity,
+                              String.format(format, humidity));
+
+        Map<CharSequence, Integer> imageMap = new
+            HashMap<CharSequence, Integer>();
+
+        Calendar calendar = Calendar.getInstance();
+        boolean night = ((calendar.get(Calendar.HOUR_OF_DAY) < 6) ||
+                         (calendar.get(Calendar.HOUR_OF_DAY) > 18));
+
+        int index = 0;
+        for (String key: Weather.DESCRIPTIONS)
+            imageMap.put(key, night? Weather.NIGHT_IMAGES[index++]:
+                         Weather.DAY_IMAGES[index++]);
+
+        views.setImageViewResource(R.id.weather, imageMap.get(description));
+
+        SharedPreferences preferences =
+            PreferenceManager.getDefaultSharedPreferences(context);
+
+        int temperature = preferences.getInt(Weather.PREF_TEMP,
+                                             Weather.CENTIGRADE);
+        switch (temperature)
+        {
+        case Weather.CENTIGRADE:
+            views.setViewVisibility(R.id.centigrade, View.VISIBLE);
+            views.setViewVisibility(R.id.fahrenheit, View.GONE);
+            break;
+
+        case Weather.FAHRENHEIT:
+            views.setViewVisibility(R.id.centigrade, View.GONE);
+            views.setViewVisibility(R.id.fahrenheit, View.VISIBLE);
+            break;
+        }
+
+        AppWidgetManager manager = AppWidgetManager.getInstance(context);
+        ComponentName provider = new
+            ComponentName(context, WeatherWidgetProvider.class);
+
+        manager.updateAppWidget(provider, views);
+    }
+
+    // GoogleTask
+    private static class GoogleTask
+            extends AsyncTask<String, Void, Document>
+    {
+        private WeakReference<WeatherWidgetProvider> weatherWeakReference;
+
+        // GoogleTask
+        public GoogleTask(WeatherWidgetProvider weather)
+        {
+            weatherWeakReference = new WeakReference<>(weather);
+        }
+
+        // doInBackground
+        @Override
+        protected Document doInBackground(String... params)
+        {
+            final WeatherWidgetProvider weather = weatherWeakReference.get();
+            if (weather == null)
+                return null;
+
+            String url = params[0];
+            // Do web search
+            try
+            {
+                Document doc = Jsoup.connect(url).get();
+                return doc;
+            }
+
+            catch (Exception e) {}
+
+            return null;
+        }
+
+        // onPostExecute
+        @Override
+        protected void onPostExecute(Document doc)
+        {
+            final WeatherWidgetProvider weather = weatherWeakReference.get();
+            if (weather == null)
+               return;
+
+            weather.update(doc);
         }
     }
 }
