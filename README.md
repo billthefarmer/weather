@@ -2,7 +2,8 @@
 
 Android weather app
 
-![Weather](https://github.com/billthefarmer/billthefarmer.github.io/raw/master/images/Weather.png)
+![Weather](https://github.com/billthefarmer/billthefarmer.github.io/raw/master/images/Weather.png) 
+![Weather](https://github.com/billthefarmer/billthefarmer.github.io/raw/master/images/Weather-widget.png)
 
 ## Geocoder
 If you are using a custom version of Android without Google apps, you
