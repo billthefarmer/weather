@@ -112,8 +112,8 @@ public class Weather extends Activity
     public static final String PREF_CENT = "pref_cent";
     public static final String PREF_FAHR = "pref_fahr";
     public static final String PREF_WIND = "pref_wind";
-    public static final String PREF_HUMID = "pref_humid";
-    public static final String PREF_PRECIP = "pref_precip";
+    public static final String PREF_HUMD = "pref_humd";
+    public static final String PREF_PRCP = "pref_prcp";
 
     public static final String DATE = "date";
     public static final String DESC = "desc";
@@ -430,19 +430,20 @@ public class Weather extends Activity
             setTitle(preferences.getString(PREF_LOCN, ""));
             dateText.setText(preferences.getString(PREF_DATE, ""));
             windText.setText(preferences.getString(PREF_WIND, ""));
-            humidityText.setText(preferences.getString(PREF_HUMID, ""));
+            humidityText.setText(preferences.getString(PREF_HUMD, ""));
             descriptionText.setText(preferences.getString(PREF_DESC, ""));
             centigradeText.setText(preferences.getString(PREF_CENT, ""));
             fahrenheitText.setText(preferences.getString(PREF_FAHR, ""));
-            precipitationText.setText(preferences.getString(PREF_PRECIP, ""));
+            precipitationText.setText(preferences.getString(PREF_PRCP, ""));
 
             Calendar calendar = Calendar.getInstance();
             boolean night = ((calendar.get(Calendar.HOUR_OF_DAY) < 6) ||
                              (calendar.get(Calendar.HOUR_OF_DAY) > 18));
 
-            weatherImage.setImageResource
-                (night? nightMap.get(descriptionText.getText()):
-                 imageMap.get(descriptionText.getText()));
+            Integer id = (night?
+                          nightMap.get(preferences.getString(PREF_DESC, "")):
+                          imageMap.get(preferences.getString(PREF_DESC, "")));
+            weatherImage.setImageResource((id == null)? 0: id);
         }
 
         getActionBar().setIcon(R.drawable.ic_action_location_searching);
@@ -528,8 +529,8 @@ public class Weather extends Activity
         editor.putString(PREF_CENT, centigradeText.getText().toString());
         editor.putString(PREF_FAHR, fahrenheitText.getText().toString());
         editor.putString(PREF_WIND, windText.getText().toString());
-        editor.putString(PREF_HUMID, humidityText.getText().toString());
-        editor.putString(PREF_PRECIP, precipitationText.getText().toString());
+        editor.putString(PREF_HUMD, humidityText.getText().toString());
+        editor.putString(PREF_PRCP, precipitationText.getText().toString());
 
         editor.apply();
 
@@ -795,7 +796,7 @@ public class Weather extends Activity
             views.setTextViewText(R.id.wind,
                                   preferences.getString(Weather.PREF_WIND, ""));
             views.setTextViewText(R.id.humidity,
-                                  preferences.getString(Weather.PREF_HUMID, ""));
+                                  preferences.getString(Weather.PREF_HUMD, ""));
             views.setTextViewText(R.id.description,
                                   preferences.getString(Weather.PREF_DESC, ""));
             views.setTextViewText(R.id.centigrade,
@@ -803,16 +804,16 @@ public class Weather extends Activity
             views.setTextViewText(R.id.fahrenheit,
                                   preferences.getString(Weather.PREF_FAHR, ""));
             views.setTextViewText(R.id.precipitation,
-                                  preferences.getString(Weather.PREF_PRECIP, ""));
+                                  preferences.getString(Weather.PREF_PRCP, ""));
 
             Calendar calendar = Calendar.getInstance();
             boolean night = ((calendar.get(Calendar.HOUR_OF_DAY) < 6) ||
                              (calendar.get(Calendar.HOUR_OF_DAY) > 18));
 
-            views.setImageViewResource
-                (R.id.weather, night?
-                 nightMap.get(preferences.getString(Weather.PREF_DESC, "")):
-                 imageMap.get(preferences.getString(Weather.PREF_DESC, "")));
+            Integer id = night?
+                nightMap.get(preferences.getString(Weather.PREF_DESC, "")):
+                imageMap.get(preferences.getString(Weather.PREF_DESC, ""));
+            views.setImageViewResource(R.id.weather, (id == null)? 0: id);
 
             switch (temperature)
             {
@@ -826,6 +827,9 @@ public class Weather extends Activity
                 views.setViewVisibility(R.id.fahrenheit, View.VISIBLE);
                 break;
             }
+
+            views.setViewVisibility(R.id.progress, View.INVISIBLE);
+            views.setViewVisibility(R.id.update, View.VISIBLE);
 
             AppWidgetManager manager = AppWidgetManager.getInstance(this);
             ComponentName provider = new

@@ -23,6 +23,7 @@
 
 package org.billthefarmer.weather;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
@@ -31,7 +32,15 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Criteria;
+import android.location.Geocoder;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.View;
@@ -41,6 +50,7 @@ import java.lang.ref.WeakReference;
 
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.jsoup.Jsoup;
@@ -49,8 +59,7 @@ import org.jsoup.nodes.Element;
 
 public class WeatherWidgetProvider extends AppWidgetProvider
 {
-    private Context context;
-    private int appWidgetIds[];
+    Map<CharSequence, Integer> imageMap;
 
     // onAppWidgetOptionsChanged
     @Override
@@ -70,9 +79,6 @@ public class WeatherWidgetProvider extends AppWidgetProvider
                          AppWidgetManager appWidgetManager,
                          int[] appWidgetIds)
     {
-        this.context = context;
-        this.appWidgetIds = appWidgetIds;
-
         SharedPreferences preferences =
             PreferenceManager.getDefaultSharedPreferences(context);
 
@@ -110,7 +116,7 @@ public class WeatherWidgetProvider extends AppWidgetProvider
             views.setTextViewText(R.id.wind,
                                   preferences.getString(Weather.PREF_WIND, ""));
             views.setTextViewText(R.id.humidity,
-                                  preferences.getString(Weather.PREF_HUMID, ""));
+                                  preferences.getString(Weather.PREF_HUMD, ""));
             views.setTextViewText(R.id.description,
                                   preferences.getString(Weather.PREF_DESC, ""));
             views.setTextViewText(R.id.centigrade,
@@ -118,10 +124,9 @@ public class WeatherWidgetProvider extends AppWidgetProvider
             views.setTextViewText(R.id.fahrenheit,
                                   preferences.getString(Weather.PREF_FAHR, ""));
             views.setTextViewText(R.id.precipitation,
-                                  preferences.getString(Weather.PREF_PRECIP, ""));
+                                  preferences.getString(Weather.PREF_PRCP, ""));
 
-            Map<CharSequence, Integer> imageMap = new
-                HashMap<CharSequence, Integer>();
+            imageMap = new HashMap<CharSequence, Integer>();
 
             Calendar today = Calendar.getInstance();
             boolean night = ((today.get(Calendar.HOUR_OF_DAY) < 6) ||
@@ -132,9 +137,9 @@ public class WeatherWidgetProvider extends AppWidgetProvider
                 imageMap.put(key, night? Weather.NIGHT_IMAGES[index++]:
                              Weather.DAY_IMAGES[index++]);
 
-            views.setImageViewResource
-                (R.id.weather,
-                 imageMap.get(preferences.getString(Weather.PREF_DESC, "")));
+            Integer id = imageMap.get(preferences
+                                      .getString(Weather.PREF_DESC, ""));
+            views.setImageViewResource(R.id.weather, (id == null)? 0: id);
 
             int temperature = preferences.getInt(Weather.PREF_TEMP,
                                                  Weather.CENTIGRADE);
@@ -152,15 +157,100 @@ public class WeatherWidgetProvider extends AppWidgetProvider
                 break;
             }
 
+            views.setViewVisibility(R.id.progress, View.VISIBLE);
+            views.setViewVisibility(R.id.update, View.INVISIBLE);
+
             // Tell the AppWidgetManager to perform an update on the app
             // widgets.
             appWidgetManager.updateAppWidget(appWidgetIds, views);
         }
+
+        refresh(context);
+    }
+
+    // refresh
+    private void refresh(Context context)
+    {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && context
+            .checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED)
+            return;
+
+        LocationManager locationManager = (LocationManager)
+            context.getSystemService(Context.LOCATION_SERVICE);
+
+        String provider = locationManager.getBestProvider(new Criteria(), true);
+        Location location = locationManager.getLastKnownLocation(provider);
+
+        if (location == null)
+        {
+            LocationListener listener = new LocationListener()
+            {
+                @Override
+                public void onLocationChanged(Location location)
+                {
+                    located(context, location);
+                }
+
+                @Override
+                public void onStatusChanged(String provider, int status,
+                                            Bundle extras) {}
+                @Override
+                public void onProviderEnabled(String provider) {}
+
+                @Override
+                public void onProviderDisabled(String provider) {}
+            };
+
+            locationManager.requestSingleUpdate(provider, listener, null);
+            return;
+        }
+
+        located(context, location);
+    }
+
+    // located
+    private void located(Context context, Location location)
+    {
+        double lat = location.getLatitude();
+	double lng = location.getLongitude();
+
+        if (!Geocoder.isPresent())
+            return;
+
+        Geocoder geocoder = new Geocoder(context);
+
+        try
+        {
+            List<Address> addressList =
+                geocoder.getFromLocation(lat, lng, Weather.ADDRESSES);
+
+            if (addressList == null)
+                return;
+
+            String locality = null;
+            for (Address address: addressList.toArray(new Address[0]))
+            {
+                if (address.getLocality() != null)
+                {
+                    locality = String.format(Weather.ADDR_FORMAT,
+                                             address.getLocality(),
+                                             address.getSubAdminArea(),
+                                             address.getCountryName());
+                    break;
+                }
+            }
+
+            String url = String.format(Weather.GOOGLE_URL, locality);
+            GoogleTask task = new GoogleTask(context, this);
+            task.execute(url);
+        }
+
+        catch (Exception e) {}
     }
 
     // update
-    @SuppressLint("InlinedApi")
-    private void update(Document doc)
+    private void update(Context context, Document doc)
     {
         if (doc == null)
             return;
@@ -180,30 +270,9 @@ public class WeatherWidgetProvider extends AppWidgetProvider
         String precipitation = weather.getElementById(Weather.WOB_PP).text();
         String humidity = weather.getElementById(Weather.WOB_HM).text();
 
-        // Create an Intent to launch Weather
-        Intent intent = new Intent(context, Weather.class);
-        PendingIntent pendingIntent =
-            PendingIntent.getActivity(context, 0, intent,
-                                      PendingIntent.FLAG_UPDATE_CURRENT |
-                                      PendingIntent.FLAG_IMMUTABLE);
-
-        // Create an Intent to update Weather widget
-        Intent updateIntent = new Intent(context, WeatherWidgetProvider.class);
-        updateIntent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
-        updateIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS,
-                              appWidgetIds);
-
-        PendingIntent pendingUpdate =
-            PendingIntent.getBroadcast(context, 0, updateIntent,
-                                       PendingIntent.FLAG_UPDATE_CURRENT |
-                                       PendingIntent.FLAG_IMMUTABLE);
-
-        // Get the layout for the widget and attach an on-click
-        // listener to the view.
+        // Get the layout for the widget
         RemoteViews views = new
             RemoteViews(context.getPackageName(), R.layout.widget);
-        views.setOnClickPendingIntent(R.id.widget, pendingIntent);
-        views.setOnClickPendingIntent(R.id.update, pendingUpdate);
 
         views.setTextViewText(R.id.location, location);
         views.setTextViewText(R.id.date, date);
@@ -222,17 +291,9 @@ public class WeatherWidgetProvider extends AppWidgetProvider
         views.setTextViewText(R.id.humidity,
                               String.format(format, humidity));
 
-        Map<CharSequence, Integer> imageMap = new
-            HashMap<CharSequence, Integer>();
-
         Calendar calendar = Calendar.getInstance();
         boolean night = ((calendar.get(Calendar.HOUR_OF_DAY) < 6) ||
                          (calendar.get(Calendar.HOUR_OF_DAY) > 18));
-
-        int index = 0;
-        for (String key: Weather.DESCRIPTIONS)
-            imageMap.put(key, night? Weather.NIGHT_IMAGES[index++]:
-                         Weather.DAY_IMAGES[index++]);
 
         views.setImageViewResource(R.id.weather, imageMap.get(description));
 
@@ -254,6 +315,9 @@ public class WeatherWidgetProvider extends AppWidgetProvider
             break;
         }
 
+        views.setViewVisibility(R.id.progress, View.INVISIBLE);
+        views.setViewVisibility(R.id.update, View.VISIBLE);
+
         AppWidgetManager manager = AppWidgetManager.getInstance(context);
         ComponentName provider = new
             ComponentName(context, WeatherWidgetProvider.class);
@@ -266,11 +330,13 @@ public class WeatherWidgetProvider extends AppWidgetProvider
             extends AsyncTask<String, Void, Document>
     {
         private WeakReference<WeatherWidgetProvider> weatherWeakReference;
+        private WeakReference<Context> contextWeakReference;
 
         // GoogleTask
-        public GoogleTask(WeatherWidgetProvider weather)
+        public GoogleTask(Context context, WeatherWidgetProvider weather)
         {
             weatherWeakReference = new WeakReference<>(weather);
+            contextWeakReference = new WeakReference<>(context);
         }
 
         // doInBackground
@@ -299,10 +365,11 @@ public class WeatherWidgetProvider extends AppWidgetProvider
         protected void onPostExecute(Document doc)
         {
             final WeatherWidgetProvider weather = weatherWeakReference.get();
-            if (weather == null)
+            final Context context = contextWeakReference.get();
+            if (weather == null || context == null)
                return;
 
-            weather.update(doc);
+            weather.update(context, doc);
         }
     }
 }
