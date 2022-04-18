@@ -115,19 +115,28 @@ public class Weather extends Activity
     public static final String PREF_HUMD = "pref_humd";
     public static final String PREF_PRCP = "pref_prcp";
 
+    public static final String PREF_DATES = "pref_dates";
+    public static final String PREF_DESCS = "pref_descs";
+    public static final String PREF_CDTMS = "pref_cdtms";
+    public static final String PREF_CNTMS = "pref_cntms";
+    public static final String PREF_FDTMS = "pref_fdtms";
+    public static final String PREF_FNTMS = "pref_fntms";
+
     public static final String DATE = "date";
     public static final String DESC = "desc";
     public static final String LOCN = "locn";
     public static final String CENT = "cent";
     public static final String FAHR = "fahr";
     public static final String WIND = "wind";
-    public static final String HUMID = "humid";
-    public static final String PRECIP = "precip";
+    public static final String HUMD = "humd";
+    public static final String PRCP = "prcp";
 
-    public static final String DAYS = "days";
+    public static final String DATES = "dates";
     public static final String DESCS = "descs";
-    public static final String DTEMPS = "dtemps";
-    public static final String NTEMPS = "ntemps";
+    public static final String CDTMS = "cdtms";
+    public static final String CNTMS = "cntms";
+    public static final String FDTMS = "fdtms";
+    public static final String FNTMS = "fntms";
 
     public static final String WOB_DC = "wob_dc";
     public static final String WOB_DF = "wob_df";
@@ -266,6 +275,13 @@ public class Weather extends Activity
     private Map<CharSequence, Integer> imageMap;
     private Map<CharSequence, Integer> nightMap;
 
+    private ArrayList<String> descList;
+    private ArrayList<String> dateList;
+    private ArrayList<String> cdtmList;
+    private ArrayList<String> cntmList;
+    private ArrayList<String> fdtmList;
+    private ArrayList<String> fntmList;
+
     private Toast toast;
 
     private ImageView weatherImage;
@@ -283,6 +299,15 @@ public class Weather extends Activity
     private ProgressBar progress;
 
     private LocationListener listener;
+
+    private String dateString;
+    private String windString;
+    private String humidityString;
+    private String locationString;
+    private String descriptionString;
+    private String centigradeString;
+    private String fahrenheitString;
+    private String precipitationString;
 
     private int temperature;
 
@@ -347,22 +372,30 @@ public class Weather extends Activity
     {
         super.onRestoreInstanceState(savedInstanceState);
 
-        setTitle(savedInstanceState.getCharSequence(LOCN));
+        locationString = savedInstanceState.getString(LOCN);
+        setTitle(locationString);
 
-        if (savedInstanceState.getCharSequence(DATE) == null)
+        if (savedInstanceState.getString(DATE) == null)
             return;
 
-        dateText.setText(savedInstanceState.getCharSequence(DATE));
-        windText.setText(savedInstanceState.getCharSequence(WIND));
-        humidityText.setText(savedInstanceState.getCharSequence(HUMID));
-        descriptionText.setText(savedInstanceState
-                                .getCharSequence(DESC));
-        centigradeText.setText(savedInstanceState
-                               .getCharSequence(CENT));
-        fahrenheitText.setText(savedInstanceState
-                               .getCharSequence(FAHR));
-        precipitationText.setText(savedInstanceState
-                                  .getCharSequence(PRECIP));
+        dateString = savedInstanceState.getString(DATE);
+        dateText.setText(dateString);
+        descriptionString = savedInstanceState.getString(DESC);
+        descriptionText.setText(descriptionString);
+        centigradeString = savedInstanceState.getString(CENT);
+        String format = getString(R.string.centigrade);
+        centigradeText.setText(String.format(format, centigradeString));
+        fahrenheitString = savedInstanceState.getString(FAHR);
+        format = getString(R.string.fahrenheit);
+        fahrenheitText.setText(String.format(format, fahrenheitString));
+        windString = savedInstanceState.getString(WIND);
+        windText.setText(windString);
+        precipitationString = savedInstanceState.getString(PRCP);
+        format = getString(R.string.precipitation);
+        precipitationText.setText(String.format(format, precipitationString));
+        format = getString(R.string.humidity);
+        humidityString = savedInstanceState.getString(HUMD);
+        humidityText.setText(String.format(format, precipitationString));
 
         Calendar calendar = Calendar.getInstance();
         boolean night = ((calendar.get(Calendar.HOUR_OF_DAY) < 6) ||
@@ -372,12 +405,12 @@ public class Weather extends Activity
             (night? nightMap.get(descriptionText.getText()):
              imageMap.get(descriptionText.getText()));
 
-        ArrayList<String> days = savedInstanceState.getStringArrayList(DAYS);
-        ArrayList<String> descs = savedInstanceState.getStringArrayList(DESCS);
-        ArrayList<String> dtemps =
-            savedInstanceState.getStringArrayList(DTEMPS);
-        ArrayList<String> ntemps =
-            savedInstanceState.getStringArrayList(NTEMPS);
+        List<String> dates = savedInstanceState.getStringArrayList(DATES);
+        List<String> descs = savedInstanceState.getStringArrayList(DESCS);
+        List<String> cdtms = savedInstanceState.getStringArrayList(CDTMS);
+        List<String> cntms = savedInstanceState.getStringArrayList(CNTMS);
+        List<String> fdtms = savedInstanceState.getStringArrayList(FDTMS);
+        List<String> fntms = savedInstanceState.getStringArrayList(FNTMS);
 
         for (int i = 0; i < dayGroup.getChildCount(); i++)
         {
@@ -389,25 +422,21 @@ public class Weather extends Activity
             ViewGroup gf = (ViewGroup) gt.getChildAt(1);
 
             TextView text = (TextView) gw.getChildAt(0);
-            text.setText(days.get(i));
+            text.setText(dates.get(i));
             text = (TextView) gw.getChildAt(1);
             text.setText(descs.get(i));
-            switch (temperature)
-            {
-            case CENTIGRADE:
-                text = (TextView) gc.getChildAt(0);
-                text.setText(dtemps.get(i));
-                text = (TextView) gc.getChildAt(1);
-                text.setText(ntemps.get(i));
-                break;
 
-            case FAHRENHEIT:
-                text = (TextView) gf.getChildAt(0);
-                text.setText(dtemps.get(i));
-                text = (TextView) gf.getChildAt(1);
-                text.setText(ntemps.get(i));
-                break;
-            }
+            format = getString(R.string.centigrade);
+            text = (TextView) gc.getChildAt(0);
+            text.setText(String.format(format, cdtms.get(i)));
+            text = (TextView) gc.getChildAt(1);
+            text.setText(String.format(format, cntms.get(i)));
+
+            format = getString(R.string.fahrenheit);
+            text = (TextView) gf.getChildAt(0);
+            text.setText(String.format(format, fdtms.get(i)));
+            text = (TextView) gf.getChildAt(1);
+            text.setText(String.format(format, fntms.get(i)));
 
             ImageView image = (ImageView) group.getChildAt(0);
             image.setImageResource(imageMap.get(descs.get(i)));
@@ -427,14 +456,27 @@ public class Weather extends Activity
 
         if (preferences.contains(PREF_DATE))
         {
-            setTitle(preferences.getString(PREF_LOCN, ""));
-            dateText.setText(preferences.getString(PREF_DATE, ""));
-            windText.setText(preferences.getString(PREF_WIND, ""));
-            humidityText.setText(preferences.getString(PREF_HUMD, ""));
-            descriptionText.setText(preferences.getString(PREF_DESC, ""));
-            centigradeText.setText(preferences.getString(PREF_CENT, ""));
-            fahrenheitText.setText(preferences.getString(PREF_FAHR, ""));
-            precipitationText.setText(preferences.getString(PREF_PRCP, ""));
+            locationString = preferences.getString(PREF_LOCN, "");
+            setTitle(locationString);
+            dateString = preferences.getString(PREF_DATE, "");
+            dateText.setText(dateString);
+            descriptionString = preferences.getString(PREF_DESC, "");
+            descriptionText.setText(descriptionString);
+            String format = getString(R.string.centigrade);
+            centigradeString = preferences.getString(PREF_CENT, "");
+            centigradeText.setText(String.format(format, centigradeString));
+            format = getString(R.string.fahrenheit);
+            fahrenheitString = preferences.getString(PREF_FAHR, "");
+            fahrenheitText.setText(String.format(format, fahrenheitString));
+            windString = preferences.getString(PREF_WIND, "");
+            windText.setText(windString);
+            format = getString(R.string.precipitation);
+            precipitationString = preferences.getString(PREF_PRCP, "");
+            precipitationText.setText(
+                String.format(format, precipitationString));
+            format = getString(R.string.humidity);
+            humidityString = preferences.getString(PREF_HUMD, "");
+            humidityText.setText(String.format(format, humidityString));
 
             Calendar calendar = Calendar.getInstance();
             boolean night = ((calendar.get(Calendar.HOUR_OF_DAY) < 6) ||
@@ -456,59 +498,25 @@ public class Weather extends Activity
     {
         super.onSaveInstanceState(outState);
 
-        outState.putCharSequence(LOCN, getTitle());
+        outState.putString(LOCN, locationString);
 
-        if (dateText.getText() == null || dateText.getText().length() == 0)
+        if (dateString == null || dateString.length() == 0)
             return;
 
-        outState.putCharSequence(DATE, dateText.getText());
-        outState.putCharSequence(DESC, descriptionText.getText());
-        outState.putCharSequence(CENT, centigradeText.getText());
-        outState.putCharSequence(FAHR, fahrenheitText.getText());
-        outState.putCharSequence(WIND, windText.getText());
-        outState.putCharSequence(HUMID, humidityText.getText());
-        outState.putCharSequence(PRECIP, precipitationText.getText());
+        outState.putString(DATE, dateString);
+        outState.putString(DESC, descriptionString);
+        outState.putString(CENT, centigradeString);
+        outState.putString(FAHR, fahrenheitString);
+        outState.putString(WIND, windString);
+        outState.putString(HUMD, humidityString);
+        outState.putString(PRCP, precipitationString);
 
-        ArrayList<String> days = new ArrayList<String>();
-        ArrayList<String> descs = new ArrayList<String>();
-        ArrayList<String> dtemps = new ArrayList<String>();
-        ArrayList<String> ntemps = new ArrayList<String>();
-
-        for (int i = 0; i < dayGroup.getChildCount(); i++)
-        {
-            ViewGroup group = (ViewGroup) dayGroup.getChildAt(i);
-            ViewGroup g = (ViewGroup) group.getChildAt(1);
-            ViewGroup gw = (ViewGroup) g.getChildAt(0);
-            ViewGroup gt = (ViewGroup) g.getChildAt(1);
-            ViewGroup gc = (ViewGroup) gt.getChildAt(0);
-            ViewGroup gf = (ViewGroup) gt.getChildAt(1);
-
-            TextView text = (TextView) gw.getChildAt(0);
-            days.add(text.getText().toString());
-            text = (TextView) gw.getChildAt(1);
-            descs.add(text.getText().toString());
-            switch(temperature)
-            {
-            case CENTIGRADE:
-                text = (TextView) gc.getChildAt(0);
-                dtemps.add(text.getText().toString());
-                text = (TextView) gc.getChildAt(1);
-                ntemps.add(text.getText().toString());
-                break;
-
-            case FAHRENHEIT:
-                text = (TextView) gf.getChildAt(0);
-                dtemps.add(text.getText().toString());
-                text = (TextView) gf.getChildAt(1);
-                ntemps.add(text.getText().toString());
-                break;
-            }
-        }
-
-        outState.putStringArrayList(DAYS, days);
-        outState.putStringArrayList(DESCS, descs);
-        outState.putStringArrayList(DTEMPS, dtemps);
-        outState.putStringArrayList(NTEMPS, ntemps);
+        outState.putStringArrayList(DATES, dateList);
+        outState.putStringArrayList(DESCS, descList);
+        outState.putStringArrayList(CDTMS, cdtmList);
+        outState.putStringArrayList(CNTMS, cntmList);
+        outState.putStringArrayList(FDTMS, fdtmList);
+        outState.putStringArrayList(FNTMS, fntmList);
     }
 
     // onPause
@@ -523,14 +531,28 @@ public class Weather extends Activity
 
         editor.putInt(PREF_TEMP, temperature);
 
-        editor.putString(PREF_LOCN, getTitle().toString());
-        editor.putString(PREF_DATE, dateText.getText().toString());
-        editor.putString(PREF_DESC, descriptionText.getText().toString());
-        editor.putString(PREF_CENT, centigradeText.getText().toString());
-        editor.putString(PREF_FAHR, fahrenheitText.getText().toString());
-        editor.putString(PREF_WIND, windText.getText().toString());
-        editor.putString(PREF_HUMD, humidityText.getText().toString());
-        editor.putString(PREF_PRCP, precipitationText.getText().toString());
+        editor.putString(PREF_LOCN, locationString);
+        editor.putString(PREF_DATE, dateString);
+        editor.putString(PREF_DESC, descriptionString);
+        editor.putString(PREF_CENT, centigradeString);
+        editor.putString(PREF_FAHR, fahrenheitString);
+        editor.putString(PREF_WIND, windString);
+        editor.putString(PREF_HUMD, humidityString);
+        editor.putString(PREF_PRCP, precipitationString);
+
+        JSONArray dateArray = new JSONArray(dateList);
+        JSONArray descArray = new JSONArray(descList);
+        JSONArray cdtmArray = new JSONArray(cdtmList);
+        JSONArray cntmArray = new JSONArray(cntmList);
+        JSONArray fdtmArray = new JSONArray(fdtmList);
+        JSONArray fntmArray = new JSONArray(fntmList);
+
+        editor.putString(PREF_DATES, dateArray.toString());
+        editor.putString(PREF_DESCS, descArray.toString());
+        editor.putString(PREF_CDTMS, cdtmArray.toString());
+        editor.putString(PREF_CNTMS, cntmArray.toString());
+        editor.putString(PREF_FDTMS, fdtmArray.toString());
+        editor.putString(PREF_FNTMS, fntmArray.toString());
 
         editor.apply();
 
@@ -707,37 +729,45 @@ public class Weather extends Activity
         boolean night = ((calendar.get(Calendar.HOUR_OF_DAY) < 6) ||
                          (calendar.get(Calendar.HOUR_OF_DAY) > 18));
 
-        String location = weather.getElementById(WOB_LOC).text();
+        locationString = weather.getElementById(WOB_LOC).text();
         getActionBar().setIcon(R.drawable.ic_action_location_found);
-        setTitle(location);
+        setTitle(locationString);
 
-        String date = weather.getElementById(WOB_DTS).text();
-        dateText.setText(date);
-        String description = weather.getElementById(WOB_DC).text();
-        descriptionText.setText(description);
-        weatherImage.setImageResource(night? nightMap.get(description):
-                                      imageMap.get(description));
+        dateString = weather.getElementById(WOB_DTS).text();
+        dateText.setText(dateString);
+        descriptionString = weather.getElementById(WOB_DC).text();
+        descriptionText.setText(descriptionString);
+        weatherImage.setImageResource(night?
+                                      nightMap.get(descriptionString):
+                                      imageMap.get(descriptionString));
 
-        String centigrade = weather.getElementById(WOB_TM).text();
+        centigradeString = weather.getElementById(WOB_TM).text();
         String format = getString(R.string.centigrade);
-        centigradeText.setText(String.format(format, centigrade));
-        String fahrenheit = weather.getElementById(WOB_TTM).text();
+        centigradeText.setText(String.format(format, centigradeString));
+        fahrenheitString = weather.getElementById(WOB_TTM).text();
         format = getString(R.string.fahrenheit);
-        fahrenheitText.setText(String.format(format, fahrenheit));
+        fahrenheitText.setText(String.format(format, fahrenheitString));
 
-        String wind = weather.getElementById(WOB_WS).text();
-        windText.setText(wind);
+        windString = weather.getElementById(WOB_WS).text();
+        windText.setText(windString);
 
-        String precipitation = weather.getElementById(WOB_PP).text();
+        precipitationString = weather.getElementById(WOB_PP).text();
         format = getString(R.string.precipitation);
-        precipitationText.setText(String.format(format, precipitation));
+        precipitationText.setText(String.format(format, precipitationString));
 
-        String humidity = weather.getElementById(WOB_HM).text();
+        humidityString = weather.getElementById(WOB_HM).text();
         format = getString(R.string.humidity);
-        humidityText.setText(String.format(format, humidity));
+        humidityText.setText(String.format(format, humidityString));
 
         Element daily = weather.getElementById(WOB_DP);
         Elements days = daily.getElementsByClass(WOB_DF);
+
+        descList = new ArrayList<String>();
+        dateList = new ArrayList<String>();
+        cdtmList = new ArrayList<String>();
+        cntmList = new ArrayList<String>();
+        fdtmList = new ArrayList<String>();
+        fntmList = new ArrayList<String>();
 
         int index = 0;
         for (Element day: days)
@@ -745,6 +775,9 @@ public class Weather extends Activity
             String d = day.getElementsByClass(Z1VZSB).first().text();
             String w = day.getElementsByClass(UW5PK).first().attr("alt");
             ViewGroup group = (ViewGroup) dayGroup.getChildAt(index++);
+
+            descList.add(w);
+            dateList.add(d);
 
             ImageView image = (ImageView) group.getChildAt(0);
             image.setImageResource(imageMap.get(w));
@@ -767,13 +800,18 @@ public class Weather extends Activity
             text = (TextView) gc.getChildAt(1);
             String tn = tt.get(2).text();
             text.setText(String.format(format, tn));
+            cntmList.add(tn);
+            cdtmList.add(td);
             format = getString(R.string.fahrenheit);
             text = (TextView) gf.getChildAt(0);
             td = tt.get(1).text();
+            fdtmList.add(td);
             text.setText(String.format(format, td));
             text = (TextView) gf.getChildAt(1);
             tn = tt.get(3).text();
             text.setText(String.format(format, tn));
+            fntmList.add(tn);
+            fdtmList.add(td);
         }
     }
 
@@ -781,38 +819,34 @@ public class Weather extends Activity
     @SuppressWarnings("deprecation")
     private void updateWidgets()
     {
-        SharedPreferences preferences =
-            PreferenceManager.getDefaultSharedPreferences(this);
-
         RemoteViews views = new
             RemoteViews(getPackageName(), R.layout.widget);
 
-        if (preferences.contains(Weather.PREF_DATE))
+        if (locationString != null)
         {
-            views.setTextViewText(R.id.location,
-                                  preferences.getString(Weather.PREF_LOCN, ""));
-            views.setTextViewText(R.id.date,
-                                  preferences.getString(Weather.PREF_DATE, ""));
-            views.setTextViewText(R.id.wind,
-                                  preferences.getString(Weather.PREF_WIND, ""));
-            views.setTextViewText(R.id.humidity,
-                                  preferences.getString(Weather.PREF_HUMD, ""));
-            views.setTextViewText(R.id.description,
-                                  preferences.getString(Weather.PREF_DESC, ""));
+            views.setTextViewText(R.id.location, locationString);
+            views.setTextViewText(R.id.date, dateString);
+            views.setTextViewText(R.id.description, descriptionString);
+            String format = getString(R.string.centigrade);
             views.setTextViewText(R.id.centigrade,
-                                  preferences.getString(Weather.PREF_CENT, ""));
+                                  String.format(format, centigradeString));
+            format = getString(R.string.fahrenheit);
             views.setTextViewText(R.id.fahrenheit,
-                                  preferences.getString(Weather.PREF_FAHR, ""));
+                                  String.format(format, fahrenheitString));
+            views.setTextViewText(R.id.wind, windString);
+            format = getString(R.string.precipitation);
             views.setTextViewText(R.id.precipitation,
-                                  preferences.getString(Weather.PREF_PRCP, ""));
+                                  String.format(format, precipitationString));
+            format = getString(R.string.humidity);
+            views.setTextViewText(R.id.humidity,
+                                  String.format(format, humidityString));
 
             Calendar calendar = Calendar.getInstance();
             boolean night = ((calendar.get(Calendar.HOUR_OF_DAY) < 6) ||
                              (calendar.get(Calendar.HOUR_OF_DAY) > 18));
 
-            Integer id = night?
-                nightMap.get(preferences.getString(Weather.PREF_DESC, "")):
-                imageMap.get(preferences.getString(Weather.PREF_DESC, ""));
+            Integer id = night? nightMap.get(descriptionString):
+                imageMap.get(descriptionString);
             views.setImageViewResource(R.id.weather, (id == null)? 0: id);
 
             switch (temperature)

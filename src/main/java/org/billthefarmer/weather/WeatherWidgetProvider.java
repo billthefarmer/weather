@@ -59,7 +59,22 @@ import org.jsoup.nodes.Element;
 
 public class WeatherWidgetProvider extends AppWidgetProvider
 {
-    Map<CharSequence, Integer> imageMap;
+    private Map<CharSequence, Integer> imageMap;
+
+    private String location;
+    private String date;
+    private String description;
+
+    private String centigrade;
+    private String fahrenheit;
+    private String wind;
+
+    private String precipitation;
+    private String humidity;
+
+    private String format;
+
+    private int temperature;
 
     // onAppWidgetOptionsChanged
     @Override
@@ -79,9 +94,6 @@ public class WeatherWidgetProvider extends AppWidgetProvider
                          AppWidgetManager appWidgetManager,
                          int[] appWidgetIds)
     {
-        SharedPreferences preferences =
-            PreferenceManager.getDefaultSharedPreferences(context);
-
         // Create an Intent to launch Weather
         Intent intent = new Intent(context, Weather.class);
         PendingIntent pendingIntent =
@@ -107,24 +119,35 @@ public class WeatherWidgetProvider extends AppWidgetProvider
         views.setOnClickPendingIntent(R.id.widget, pendingIntent);
         views.setOnClickPendingIntent(R.id.update, pendingUpdate);
 
+        SharedPreferences preferences =
+            PreferenceManager.getDefaultSharedPreferences(context);
+
         if (preferences.contains(Weather.PREF_DATE))
         {
             views.setTextViewText(R.id.location,
                                   preferences.getString(Weather.PREF_LOCN, ""));
             views.setTextViewText(R.id.date,
                                   preferences.getString(Weather.PREF_DATE, ""));
-            views.setTextViewText(R.id.wind,
-                                  preferences.getString(Weather.PREF_WIND, ""));
-            views.setTextViewText(R.id.humidity,
-                                  preferences.getString(Weather.PREF_HUMD, ""));
             views.setTextViewText(R.id.description,
                                   preferences.getString(Weather.PREF_DESC, ""));
+            format = context.getString(R.string.centigrade);
+            centigrade = preferences.getString(Weather.PREF_CENT, "");
             views.setTextViewText(R.id.centigrade,
-                                  preferences.getString(Weather.PREF_CENT, ""));
+                                  String.format(format, centigrade));
+            format = context.getString(R.string.fahrenheit);
+            fahrenheit = preferences.getString(Weather.PREF_FAHR, "");
             views.setTextViewText(R.id.fahrenheit,
-                                  preferences.getString(Weather.PREF_FAHR, ""));
+                                  String.format(format, fahrenheit));
+            views.setTextViewText(R.id.wind,
+                                  preferences.getString(Weather.PREF_WIND, ""));
+            format = context.getString(R.string.precipitation);
+            precipitation = preferences.getString(Weather.PREF_PRCP, "");
             views.setTextViewText(R.id.precipitation,
-                                  preferences.getString(Weather.PREF_PRCP, ""));
+                                  String.format(format, precipitation));
+            format = context.getString(R.string.humidity);
+            humidity = preferences.getString(Weather.PREF_HUMD, "");
+            views.setTextViewText(R.id.humidity,
+                                  String.format(format, humidity));
 
             imageMap = new HashMap<CharSequence, Integer>();
 
@@ -137,13 +160,12 @@ public class WeatherWidgetProvider extends AppWidgetProvider
                 imageMap.put(key, night? Weather.NIGHT_IMAGES[index++]:
                              Weather.DAY_IMAGES[index++]);
 
-            Integer id = imageMap.get(preferences
-                                      .getString(Weather.PREF_DESC, ""));
+            Integer id = imageMap.get(
+                preferences.getString(Weather.PREF_DESC, ""));
             views.setImageViewResource(R.id.weather, (id == null)? 0: id);
 
-            int temperature = preferences.getInt(Weather.PREF_TEMP,
-                                                 Weather.CENTIGRADE);
-
+            temperature = preferences.getInt(Weather.PREF_TEMP,
+                                             Weather.CENTIGRADE);
             switch (temperature)
             {
             case Weather.CENTIGRADE:
@@ -156,15 +178,14 @@ public class WeatherWidgetProvider extends AppWidgetProvider
                 views.setViewVisibility(R.id.fahrenheit, View.VISIBLE);
                 break;
             }
-
-            views.setViewVisibility(R.id.progress, View.VISIBLE);
-            views.setViewVisibility(R.id.update, View.INVISIBLE);
-
-            // Tell the AppWidgetManager to perform an update on the app
-            // widgets.
-            appWidgetManager.updateAppWidget(appWidgetIds, views);
         }
 
+        views.setViewVisibility(R.id.progress, View.VISIBLE);
+        views.setViewVisibility(R.id.update, View.INVISIBLE);
+
+        // Tell the AppWidgetManager to perform an update on the app
+        // widgets.
+        appWidgetManager.updateAppWidget(appWidgetIds, views);
         refresh(context);
     }
 
@@ -174,7 +195,10 @@ public class WeatherWidgetProvider extends AppWidgetProvider
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && context
             .checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
             != PackageManager.PERMISSION_GRANTED)
+        {
+            hideProgress(context);
             return;
+        }
 
         LocationManager locationManager = (LocationManager)
             context.getSystemService(Context.LOCATION_SERVICE);
@@ -216,7 +240,10 @@ public class WeatherWidgetProvider extends AppWidgetProvider
 	double lng = location.getLongitude();
 
         if (!Geocoder.isPresent())
+        {
+            hideProgress(context);
             return;
+        }
 
         Geocoder geocoder = new Geocoder(context);
 
@@ -249,71 +276,90 @@ public class WeatherWidgetProvider extends AppWidgetProvider
         catch (Exception e) {}
     }
 
+    // hideProgress
+    private void hideProgress(Context context)
+    {
+        RemoteViews views = new
+            RemoteViews(context.getPackageName(), R.layout.widget);
+
+        views.setViewVisibility(R.id.progress, View.INVISIBLE);
+        views.setViewVisibility(R.id.update, View.VISIBLE);
+
+        AppWidgetManager manager = AppWidgetManager.getInstance(context);
+        ComponentName provider = new
+            ComponentName(context, WeatherWidgetProvider.class);
+
+        manager.updateAppWidget(provider, views);
+    }
+
     // update
     private void update(Context context, Document doc)
     {
         if (doc == null)
+        {
+            hideProgress(context);
             return;
+        }
 
         Element weather = doc.getElementById(Weather.WOB_WC);
         if (weather == null)
+        {
+            hideProgress(context);
             return;
-
-        String location = weather.getElementById(Weather.WOB_LOC).text();
-        String date = weather.getElementById(Weather.WOB_DTS).text();
-        String description = weather.getElementById(Weather.WOB_DC).text();
-
-        String centigrade = weather.getElementById(Weather.WOB_TM).text();
-        String fahrenheit = weather.getElementById(Weather.WOB_TTM).text();
-        String wind = weather.getElementById(Weather.WOB_WS).text();
-
-        String precipitation = weather.getElementById(Weather.WOB_PP).text();
-        String humidity = weather.getElementById(Weather.WOB_HM).text();
+        }
 
         // Get the layout for the widget
         RemoteViews views = new
             RemoteViews(context.getPackageName(), R.layout.widget);
 
-        views.setTextViewText(R.id.location, location);
-        views.setTextViewText(R.id.date, date);
-        views.setTextViewText(R.id.description, description);
-        views.setTextViewText(R.id.wind, wind);
-        String format = context.getString(R.string.centigrade);
-        views.setTextViewText(R.id.centigrade,
-                              String.format(format, centigrade));
-        format = context.getString(R.string.fahrenheit);
-        views.setTextViewText(R.id.fahrenheit,
-                              String.format(format, fahrenheit));
-        format = context.getString(R.string.precipitation);
-        views.setTextViewText(R.id.precipitation,
-                              String.format(format, precipitation));
-        format = context.getString(R.string.humidity);
-        views.setTextViewText(R.id.humidity,
-                              String.format(format, humidity));
-
-        Calendar calendar = Calendar.getInstance();
-        boolean night = ((calendar.get(Calendar.HOUR_OF_DAY) < 6) ||
-                         (calendar.get(Calendar.HOUR_OF_DAY) > 18));
-
-        views.setImageViewResource(R.id.weather, imageMap.get(description));
-
-        SharedPreferences preferences =
-            PreferenceManager.getDefaultSharedPreferences(context);
-
-        int temperature = preferences.getInt(Weather.PREF_TEMP,
-                                             Weather.CENTIGRADE);
-        switch (temperature)
+        try
         {
-        case Weather.CENTIGRADE:
-            views.setViewVisibility(R.id.centigrade, View.VISIBLE);
-            views.setViewVisibility(R.id.fahrenheit, View.GONE);
-            break;
+            location = weather.getElementById(Weather.WOB_LOC).text();
+            date = weather.getElementById(Weather.WOB_DTS).text();
+            description = weather.getElementById(Weather.WOB_DC).text();
 
-        case Weather.FAHRENHEIT:
-            views.setViewVisibility(R.id.centigrade, View.GONE);
-            views.setViewVisibility(R.id.fahrenheit, View.VISIBLE);
-            break;
+            centigrade = weather.getElementById(Weather.WOB_TM).text();
+            fahrenheit = weather.getElementById(Weather.WOB_TTM).text();
+            wind = weather.getElementById(Weather.WOB_WS).text();
+
+            precipitation = weather.getElementById(Weather.WOB_PP).text();
+            humidity = weather.getElementById(Weather.WOB_HM).text();
+
+            views.setTextViewText(R.id.location, location);
+            views.setTextViewText(R.id.date, date);
+            views.setTextViewText(R.id.description, description);
+            views.setTextViewText(R.id.wind, wind);
+            String format = context.getString(R.string.centigrade);
+            views.setTextViewText(R.id.centigrade,
+                                  String.format(format, centigrade));
+            format = context.getString(R.string.fahrenheit);
+            views.setTextViewText(R.id.fahrenheit,
+                                  String.format(format, fahrenheit));
+            format = context.getString(R.string.precipitation);
+            views.setTextViewText(R.id.precipitation,
+                                  String.format(format, precipitation));
+            format = context.getString(R.string.humidity);
+            views.setTextViewText(R.id.humidity,
+                                  String.format(format, humidity));
+
+            Integer id = imageMap.get(description);
+            views.setImageViewResource(R.id.weather, (id == null)? 0: id);
+
+            switch (temperature)
+            {
+            case Weather.CENTIGRADE:
+                views.setViewVisibility(R.id.centigrade, View.VISIBLE);
+                views.setViewVisibility(R.id.fahrenheit, View.GONE);
+                break;
+
+            case Weather.FAHRENHEIT:
+                views.setViewVisibility(R.id.centigrade, View.GONE);
+                views.setViewVisibility(R.id.fahrenheit, View.VISIBLE);
+                break;
+            }
         }
+
+        catch (Exception e) {}
 
         views.setViewVisibility(R.id.progress, View.INVISIBLE);
         views.setViewVisibility(R.id.update, View.VISIBLE);
