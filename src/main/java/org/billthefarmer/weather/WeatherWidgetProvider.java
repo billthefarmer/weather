@@ -253,7 +253,10 @@ public class WeatherWidgetProvider extends AppWidgetProvider
                 geocoder.getFromLocation(lat, lng, Weather.ADDRESSES);
 
             if (addressList == null)
+            {
+                hideProgress(context);
                 return;
+            }
 
             String locality = null;
             for (Address address: addressList.toArray(new Address[0]))
@@ -357,6 +360,8 @@ public class WeatherWidgetProvider extends AppWidgetProvider
                 views.setViewVisibility(R.id.fahrenheit, View.VISIBLE);
                 break;
             }
+
+            save(context);
         }
 
         catch (Exception e) {}
@@ -369,6 +374,25 @@ public class WeatherWidgetProvider extends AppWidgetProvider
             ComponentName(context, WeatherWidgetProvider.class);
 
         manager.updateAppWidget(provider, views);
+    }
+
+    // save
+    private void save(Context context)
+    {
+        SharedPreferences preferences =
+            PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor editor = preferences.edit();
+
+        editor.putString(Weather.PREF_LOCN, location);
+        editor.putString(Weather.PREF_DATE, date);
+        editor.putString(Weather.PREF_DESC, description);
+        editor.putString(Weather.PREF_CENT, centigrade);
+        editor.putString(Weather.PREF_FAHR, fahrenheit);
+        editor.putString(Weather.PREF_WIND, wind);
+        editor.putString(Weather.PREF_HUMD, humidity);
+        editor.putString(Weather.PREF_PRCP, precipitation);
+
+        editor.apply();
     }
 
     // GoogleTask
@@ -413,7 +437,10 @@ public class WeatherWidgetProvider extends AppWidgetProvider
             final WeatherWidgetProvider weather = weatherWeakReference.get();
             final Context context = contextWeakReference.get();
             if (weather == null || context == null)
-               return;
+            {
+                hideProgress(context);
+                return;
+            }
 
             weather.update(context, doc);
         }
