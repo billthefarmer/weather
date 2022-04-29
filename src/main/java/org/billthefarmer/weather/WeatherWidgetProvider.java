@@ -438,7 +438,7 @@ public class WeatherWidgetProvider extends AppWidgetProvider
             final Context context = contextWeakReference.get();
             if (weather == null || context == null)
             {
-                hideProgress(context);
+                weather.hideProgress(context);
                 return;
             }
 
